@@ -1,59 +1,112 @@
-import React from 'react';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
-
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
-
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
-  color: string;
-}) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
-}
+import { Tabs } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Text, View } from 'react-native';
+import { storage } from '../../utils/storage';
+import { database } from '../../utils/database';
+import { Colors } from '../../constants/Colors';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const [hasSupportPerson, setHasSupportPerson] = useState(false);
+
+  type TabIconProps = {
+    emoji: string;
+    color: string;
+    size: number;
+  };
+
+  const TabIcon = ({ emoji, color, size }: TabIconProps) => (
+    <View style={{ paddingBottom: 10 }}>
+      <Text style={{ fontSize: size, color }}>{emoji}</Text>
+    </View>
+  );
+
+  useEffect(() => {
+    const checkSupportPerson = async () => {
+      try {
+        // Check if onboarding is complete first
+        const hasOnboarded = await storage.getHasCompletedOnboarding();
+        if (!hasOnboarded) {
+          setHasSupportPerson(false);
+          return;
+        }
+
+        const supportPerson = await database.getSupportPerson();
+        setHasSupportPerson(!!supportPerson);
+      } catch (error) {
+        console.error('Error checking support person:', error);
+        setHasSupportPerson(false);
+      }
+    };
+
+    checkSupportPerson();
+  }, []);
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-      }}>
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: Colors.surface,
+          borderTopColor: Colors.border,
+          borderTopWidth: 1,
+          paddingBottom: 15,
+          paddingTop: 10,
+          height: 90,
+        },
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: Colors.textLight,
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="sos"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          title: 'SOS',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="pulse-outline" size={size} color={color} />
+          ),
         }}
       />
-    </Tabs>
-  );
+      {hasSupportPerson && (
+        <Tabs.Screen
+          name="support"
+          options={{
+            title: 'Support',
+            tabBarIcon: ({ color, size }) => (
+              // <Text style={{ fontSize: size, color }}></Text>
+              <Ionicons name="heart-outline" size={size} color={color} />
+            ),
+          }}
+        />
+      )}
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="explore"
+        options={{
+          href: null, // This is all you need
+        }}
+      />
+      </Tabs>
+      );
 }
