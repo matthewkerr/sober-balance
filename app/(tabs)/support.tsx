@@ -7,6 +7,8 @@ import {
   Alert,
   SafeAreaView,
   Linking,
+  TextInput,
+  Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -18,6 +20,9 @@ export default function SupportScreen() {
   const insets = useSafeAreaInsets();
   const [supportPerson, setSupportPerson] = useState<SupportPerson | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [supportName, setSupportName] = useState('');
+  const [supportPhone, setSupportPhone] = useState('');
 
   useFocusEffect(
     React.useCallback(() => {
@@ -36,6 +41,43 @@ export default function SupportScreen() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleAddSupportPerson = () => {
+    setShowAddModal(true);
+  };
+
+  const handleSaveSupportPerson = async () => {
+    if (!supportName.trim() || !supportPhone.trim()) {
+      Alert.alert('Error', 'Please enter both name and phone number.');
+      return;
+    }
+
+    if (supportPhone.trim().length < 10) {
+      Alert.alert('Error', 'Please enter a valid phone number (at least 10 digits).');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await database.saveSupportPerson(supportName.trim(), supportPhone.trim());
+      await loadSupportPerson();
+      setShowAddModal(false);
+      setSupportName('');
+      setSupportPhone('');
+      Alert.alert('Success', 'Support person added successfully!');
+    } catch (error) {
+      console.error('Error saving support person:', error);
+      Alert.alert('Error', 'Failed to save support person. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelAdd = () => {
+    setShowAddModal(false);
+    setSupportName('');
+    setSupportPhone('');
   };
 
   const handleCallSupport = () => {
@@ -85,11 +127,85 @@ export default function SupportScreen() {
               <Text style={styles.noSupportIcon}>❤️</Text>
               <Text style={styles.noSupportTitle}>No Support Person Set</Text>
               <Text style={styles.noSupportText}>
-                You haven't set up a support person yet. You can add one during onboarding or in settings.
+                Would you like to add a support person you can reach out to in case of emergency?
               </Text>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={handleAddSupportPerson}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.addButtonText}>Add Support Person</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
+
+        {/* Add Support Person Modal */}
+        <Modal
+          visible={showAddModal}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={handleCancelAdd}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Add Support Person</Text>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Name</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={supportName}
+                  onChangeText={setSupportName}
+                  placeholder="Enter their name"
+                  autoCorrect={false}
+                  autoCapitalize="words"
+                  returnKeyType="next"
+                  maxLength={50}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Phone Number</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={supportPhone}
+                  onChangeText={setSupportPhone}
+                  placeholder="Enter their phone number"
+                  keyboardType="phone-pad"
+                  returnKeyType="done"
+                  maxLength={20}
+                />
+              </View>
+
+              <View style={styles.modalNote}>
+                <Text style={styles.modalNoteText}>
+                  💙 This person will be available as a quick contact option during difficult moments.
+                </Text>
+              </View>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={handleCancelAdd}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.saveButton]}
+                  onPress={handleSaveSupportPerson}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.saveButtonText}>
+                    {isLoading ? 'Saving...' : 'Save'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     );
   }
@@ -262,5 +378,108 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
+  },
+  addButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    marginTop: 24,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  addButtonText: {
+    ...Fonts.title,
+    color: Colors.surface,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: Colors.surface,
+    borderRadius: 20,
+    padding: 30,
+    margin: 20,
+    width: '90%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  modalTitle: {
+    ...Fonts.headline,
+    color: Colors.text,
+    textAlign: 'center',
+    marginBottom: 24,
+    fontWeight: '600',
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    ...Fonts.body,
+    color: Colors.text,
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  textInput: {
+    backgroundColor: Colors.background,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: Colors.text,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  modalNote: {
+    backgroundColor: '#E8F4FD',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+  },
+  modalNoteText: {
+    ...Fonts.body,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  cancelButtonText: {
+    ...Fonts.body,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+  saveButton: {
+    backgroundColor: Colors.primary,
+  },
+  saveButtonText: {
+    ...Fonts.body,
+    color: Colors.surface,
+    fontWeight: '600',
   },
 }); 

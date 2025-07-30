@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ExpoSdk53",
-    "slug": "ExpoSdk53",
+    "slug": "sober-balance",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -33,6 +33,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "87e2929a-58b4-49ea-843f-ae8a4227c716"
+      }
+    },
+    "owner": "sober-balance"
   }
 }

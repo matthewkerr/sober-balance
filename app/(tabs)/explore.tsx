@@ -84,7 +84,7 @@ export default function DebugScreen() {
   const handleResetOnboarding = async () => {
     Alert.alert(
       'Reset Onboarding?',
-      'This will clear all saved data and restart the onboarding process.',
+      'This will clear all saved data and take you to the onboarding flow.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -93,18 +93,8 @@ export default function DebugScreen() {
           onPress: async () => {
             try {
               await storage.clearAll();
-              Alert.alert(
-                'Reset Complete',
-                'Onboarding has been reset. The app will restart.',
-                [
-                  {
-                    text: 'OK',
-                    onPress: () => {
-                      router.replace('/');
-                    }
-                  }
-                ]
-              );
+              await database.updateUserOnboarding(false, 1);
+              router.replace('/onboarding');
             } catch (error) {
               Alert.alert('Error', 'Failed to reset onboarding');
             }

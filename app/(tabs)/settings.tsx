@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { database, SupportPerson } from '../../utils/database';
 import { storage } from '../../utils/storage';
 import { Colors } from '../../constants/Colors';
@@ -20,6 +21,7 @@ import { Fonts } from '../../constants/Fonts';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [dataStats, setDataStats] = useState({
     encouragements: { total: 0, seen: 0, unseen: 0 },
@@ -34,12 +36,16 @@ export default function SettingsScreen() {
   const [supportName, setSupportName] = useState('');
   const [supportPhone, setSupportPhone] = useState('');
   const [showSobrietyCounter, setShowSobrietyCounter] = useState(true);
+  const [userName, setUserName] = useState<string>('');
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
 
   useFocusEffect(
     React.useCallback(() => {
       loadDataStats();
       loadSupportPerson();
       loadSobrietyCounterSetting();
+      loadUserName();
     }, [])
   );
 
@@ -103,6 +109,51 @@ export default function SettingsScreen() {
     }
   };
 
+  const loadUserName = async () => {
+    try {
+      const name = await storage.getUserName();
+      setUserName(name || '');
+    } catch (error) {
+      console.error('Error loading user name:', error);
+    }
+  };
+
+  const handleEditUsername = () => {
+    setNewUsername(userName);
+    setShowUsernameModal(true);
+  };
+
+  const handleSaveUsername = async () => {
+    if (!newUsername.trim()) {
+      Alert.alert('Error', 'Please enter a name.');
+      return;
+    }
+
+    if (newUsername.trim().length < 2) {
+      Alert.alert('Error', 'Name must be at least 2 characters long.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await storage.setUserName(newUsername.trim());
+      await database.updateUserName(newUsername.trim());
+      await loadUserName();
+      setShowUsernameModal(false);
+      Alert.alert('Success', 'Your name has been updated.');
+    } catch (error) {
+      console.error('Error saving username:', error);
+      Alert.alert('Error', 'Failed to save name. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelUsername = () => {
+    setShowUsernameModal(false);
+    setNewUsername('');
+  };
+
   const handleResetEncouragements = () => {
     Alert.alert(
       'Reset Encouragements',
@@ -161,7 +212,7 @@ export default function SettingsScreen() {
   const handleDeleteAllData = () => {
     Alert.alert(
       'Delete All Data',
-      'This will permanently delete all your personal data including journal entries, intentions, check-ins, and SOS logs. Encouragement messages will be preserved. This action cannot be undone.',
+      'This will permanently delete all your personal data and reset your onboarding. You will be taken to the onboarding flow to start fresh. This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -171,8 +222,9 @@ export default function SettingsScreen() {
             try {
               setIsLoading(true);
               await database.clearUserData();
-              await loadDataStats();
-              Alert.alert('Success', 'All your personal data has been deleted.');
+              await storage.setHasCompletedOnboarding(false);
+              await database.updateUserOnboarding(false, 1);
+              router.replace('/onboarding');
             } catch (error) {
               console.error('Error deleting user data:', error);
               Alert.alert('Error', 'Failed to delete data. Please try again.');
@@ -279,7 +331,7 @@ export default function SettingsScreen() {
   const handleResetOnboarding = () => {
     Alert.alert(
       'Reset Onboarding',
-      'This will reset your onboarding status. You will need to complete the onboarding process again. This action cannot be undone.',
+      'This will reset your onboarding status and take you to the onboarding flow. This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -289,18 +341,8 @@ export default function SettingsScreen() {
             try {
               setIsLoading(true);
               await storage.setHasCompletedOnboarding(false);
-              Alert.alert(
-                'Onboarding Reset',
-                'Your onboarding has been reset. Please restart the app to begin the onboarding process again.',
-                [
-                  {
-                    text: 'OK',
-                    onPress: () => {
-                      // The user will need to restart the app to see the onboarding
-                    }
-                  }
-                ]
-              );
+              await database.updateUserOnboarding(false, 1);
+              router.replace('/onboarding');
             } catch (error) {
               console.error('Error resetting onboarding:', error);
               Alert.alert('Error', 'Failed to reset onboarding. Please try again.');
@@ -392,6 +434,16 @@ export default function SettingsScreen() {
       >
         <Text style={styles.title}>Settings</Text>
         
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Profile</Text>
+          
+          <SettingItem
+            title="Edit Name"
+            subtitle={userName ? `Current name: ${userName}` : "Set your display name"}
+            onPress={handleEditUsername}
+          />
+        </View>
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Support Person</Text>
           
@@ -526,6 +578,54 @@ export default function SettingsScreen() {
               <TouchableOpacity
                 style={styles.saveButton}
                 onPress={handleSaveSupportPerson}
+                disabled={isLoading}
+              >
+                <Text style={styles.saveButtonText}>
+                  {isLoading ? 'Saving...' : 'Save'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Username Modal */}
+      <Modal
+        visible={showUsernameModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCancelUsername}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit Name</Text>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Name</Text>
+              <TextInput
+                style={styles.textInput}
+                value={newUsername}
+                onChangeText={setNewUsername}
+                placeholder="Enter your name"
+                placeholderTextColor={Colors.textLight}
+                autoCorrect={false}
+                autoCapitalize="words"
+                returnKeyType="done"
+                maxLength={50}
+              />
+            </View>
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={handleCancelUsername}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleSaveUsername}
                 disabled={isLoading}
               >
                 <Text style={styles.saveButtonText}>

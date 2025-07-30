@@ -1,14 +1,9 @@
 import { Tabs } from 'expo-router';
-import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
-import { storage } from '../../utils/storage';
-import { database } from '../../utils/database';
 import { Colors } from '../../constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function TabLayout() {
-  const [hasSupportPerson, setHasSupportPerson] = useState(false);
-
   type TabIconProps = {
     emoji: string;
     color: string;
@@ -20,27 +15,6 @@ export default function TabLayout() {
       <Text style={{ fontSize: size, color }}>{emoji}</Text>
     </View>
   );
-
-  useEffect(() => {
-    const checkSupportPerson = async () => {
-      try {
-        // Check if onboarding is complete first
-        const hasOnboarded = await storage.getHasCompletedOnboarding();
-        if (!hasOnboarded) {
-          setHasSupportPerson(false);
-          return;
-        }
-
-        const supportPerson = await database.getSupportPerson();
-        setHasSupportPerson(!!supportPerson);
-      } catch (error) {
-        console.error('Error checking support person:', error);
-        setHasSupportPerson(false);
-      }
-    };
-
-    checkSupportPerson();
-  }, []);
 
   return (
     <Tabs
@@ -80,18 +54,15 @@ export default function TabLayout() {
           ),
         }}
       />
-      {hasSupportPerson && (
-        <Tabs.Screen
-          name="support"
-          options={{
-            title: 'Support',
-            tabBarIcon: ({ color, size }) => (
-              // <Text style={{ fontSize: size, color }}></Text>
-              <Ionicons name="heart-outline" size={size} color={color} />
-            ),
-          }}
-        />
-      )}
+      <Tabs.Screen
+        name="support"
+        options={{
+          title: 'Support',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="heart-outline" size={size} color={color} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="settings"
         options={{

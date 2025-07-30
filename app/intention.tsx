@@ -24,6 +24,8 @@ export default function IntentionScreen() {
   const [isSetting, setIsSetting] = useState(false);
   const [newIntention, setNewIntention] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [editingIntention, setEditingIntention] = useState<Intention | null>(null);
+  const [editContent, setEditContent] = useState('');
 
   useFocusEffect(
     React.useCallback(() => {
@@ -83,6 +85,82 @@ export default function IntentionScreen() {
       setNewIntention('');
       setIsSetting(false);
     }
+  };
+
+  const handleEditIntention = (intention: Intention) => {
+    setEditingIntention(intention);
+    setEditContent(intention.content);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingIntention || !editContent.trim()) {
+      Alert.alert('Error', 'Please enter some content.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await database.updateIntention(editingIntention.id!, editContent.trim());
+      await loadIntentions();
+      setEditingIntention(null);
+      setEditContent('');
+      Alert.alert('Success', 'Intention updated!');
+    } catch (error) {
+      console.error('Error updating intention:', error);
+      Alert.alert('Error', 'Failed to update intention. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    if (editContent !== editingIntention?.content) {
+      Alert.alert(
+        'Discard Changes?',
+        'Are you sure you want to discard your changes?',
+        [
+          { text: 'Keep Editing', style: 'cancel' },
+          { 
+            text: 'Discard', 
+            style: 'destructive',
+            onPress: () => {
+              setEditingIntention(null);
+              setEditContent('');
+            }
+          }
+        ]
+      );
+    } else {
+      setEditingIntention(null);
+      setEditContent('');
+    }
+  };
+
+  const handleDeleteIntention = (intention: Intention) => {
+    Alert.alert(
+      'Delete Intention?',
+      'Are you sure you want to delete this intention? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsLoading(true);
+              await database.deleteIntention(intention.id!);
+              await loadIntentions();
+              Alert.alert('Success', 'Intention deleted.');
+            } catch (error) {
+              console.error('Error deleting intention:', error);
+              Alert.alert('Error', 'Failed to delete intention. Please try again.');
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const formatDate = (timestamp: string) => {
@@ -184,10 +262,64 @@ export default function IntentionScreen() {
           ) : (
             intentions.map((intention) => (
               <View key={intention.id} style={styles.intentionCard}>
-                <Text style={styles.intentionDate}>{formatDate(intention.timestamp)}</Text>
-                <Text style={styles.intentionContent}>
-                  {truncateText(intention.content)}
-                </Text>
+                {editingIntention?.id === intention.id ? (
+                  // Edit mode
+                  <View>
+                    <Text style={styles.intentionDate}>{formatDate(intention.timestamp)}</Text>
+                    <TextInput
+                      style={styles.editTextInput}
+                      value={editContent}
+                      onChangeText={setEditContent}
+                      placeholder="Edit your intention..."
+                      placeholderTextColor={Colors.textLight}
+                      multiline
+                      textAlignVertical="top"
+                      autoFocus
+                    />
+                    <View style={styles.editButtons}>
+                      <TouchableOpacity 
+                        style={styles.cancelEditButton}
+                        onPress={handleCancelEdit}
+                        disabled={isLoading}
+                      >
+                        <Text style={styles.cancelEditButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.saveEditButton, !editContent.trim() && styles.saveEditButtonDisabled]}
+                        onPress={handleSaveEdit}
+                        disabled={isLoading || !editContent.trim()}
+                      >
+                        <Text style={styles.saveEditButtonText}>
+                          {isLoading ? 'Saving...' : 'Save'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  // View mode
+                  <View>
+                    <View style={styles.intentionHeader}>
+                      <Text style={styles.intentionDate}>{formatDate(intention.timestamp)}</Text>
+                      <View style={styles.intentionActions}>
+                        <TouchableOpacity 
+                          style={styles.editButton}
+                          onPress={() => handleEditIntention(intention)}
+                        >
+                          <Text style={styles.editButtonText}>✏️</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={styles.deleteButton}
+                          onPress={() => handleDeleteIntention(intention)}
+                        >
+                          <Text style={styles.deleteButtonText}>🗑️</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <Text style={styles.intentionContent}>
+                      {truncateText(intention.content)}
+                    </Text>
+                  </View>
+                )}
               </View>
             ))
           )}
@@ -346,5 +478,69 @@ const styles = StyleSheet.create({
     ...Fonts.body,
     color: Colors.text,
     lineHeight: 24,
+  },
+  editTextInput: {
+    ...Fonts.body,
+    color: Colors.text,
+    minHeight: 120,
+    padding: 16,
+    backgroundColor: Colors.background,
+    borderRadius: 12,
+    marginBottom: 20,
+    textAlignVertical: 'top',
+  },
+  editButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  cancelEditButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: Colors.background,
+    alignItems: 'center',
+  },
+  cancelEditButtonText: {
+    ...Fonts.body,
+    color: Colors.textSecondary,
+  },
+  saveEditButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+  },
+  saveEditButtonDisabled: {
+    backgroundColor: Colors.textLight,
+  },
+  saveEditButtonText: {
+    ...Fonts.body,
+    color: Colors.surface,
+    fontWeight: '600',
+  },
+  intentionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  editButton: {
+    padding: 5,
+  },
+  editButtonText: {
+    fontSize: 18,
+  },
+  intentionActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  deleteButton: {
+    padding: 1,
+  },
+  deleteButtonText: {
+    fontSize: 18,
   },
 }); 

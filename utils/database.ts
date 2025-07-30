@@ -46,6 +46,7 @@ export interface JournalEntry {
   content: string;
   timestamp: string;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface Intention {
@@ -53,6 +54,7 @@ export interface Intention {
   content: string;
   timestamp: string;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface DailyCheckIn {
@@ -144,6 +146,48 @@ class DatabaseService {
           console.log('Database migration completed successfully');
         }
       }
+
+      // Add updated_at column to journal_entries table if it doesn't exist
+      const journalTableInfo = await this.db.getAllAsync<{ name: string; type: string }>(
+        "PRAGMA table_info(journal_entries)"
+      );
+      
+      if (journalTableInfo.length > 0) {
+        const hasUpdatedAtColumn = journalTableInfo.some(column => column.name === 'updated_at');
+        
+        if (!hasUpdatedAtColumn) {
+          console.log('Adding updated_at column to journal_entries table...');
+          try {
+            // First add the column without default
+            await this.db.execAsync('ALTER TABLE journal_entries ADD COLUMN updated_at DATETIME');
+            // Then update existing rows with current timestamp
+            await this.db.execAsync('UPDATE journal_entries SET updated_at = created_at WHERE updated_at IS NULL');
+          } catch (error) {
+            console.warn('Failed to add updated_at column to journal_entries:', error);
+          }
+        }
+      }
+
+      // Add updated_at column to intentions table if it doesn't exist
+      const intentionsTableInfo = await this.db.getAllAsync<{ name: string; type: string }>(
+        "PRAGMA table_info(intentions)"
+      );
+      
+      if (intentionsTableInfo.length > 0) {
+        const hasUpdatedAtColumn = intentionsTableInfo.some(column => column.name === 'updated_at');
+        
+        if (!hasUpdatedAtColumn) {
+          console.log('Adding updated_at column to intentions table...');
+          try {
+            // First add the column without default
+            await this.db.execAsync('ALTER TABLE intentions ADD COLUMN updated_at DATETIME');
+            // Then update existing rows with current timestamp
+            await this.db.execAsync('UPDATE intentions SET updated_at = created_at WHERE updated_at IS NULL');
+          } catch (error) {
+            console.warn('Failed to add updated_at column to intentions:', error);
+          }
+        }
+      }
     } catch (error) {
       console.error('Error during database migration:', error);
       // If migration fails, we'll continue with normal table creation
@@ -223,7 +267,8 @@ class DatabaseService {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         content TEXT NOT NULL,
         timestamp TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
@@ -233,7 +278,8 @@ class DatabaseService {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         content TEXT NOT NULL,
         timestamp TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
@@ -433,6 +479,20 @@ class DatabaseService {
       );
     } catch (error) {
       console.error('Error updating user onboarding:', error);
+      throw error;
+    }
+  }
+
+  async updateUserName(name: string): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    try {
+      await this.db.runAsync(
+        'UPDATE users SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT id FROM users ORDER BY id DESC LIMIT 1)',
+        [name]
+      );
+    } catch (error) {
+      console.error('Error updating user name:', error);
       throw error;
     }
   }
@@ -678,6 +738,60 @@ class DatabaseService {
     }
   }
 
+  async updateJournalEntry(id: number, content: string): Promise<void> {
+    if (!this.db) {
+      console.warn('Database not initialized, attempting to initialize...');
+      try {
+        await this.init();
+      } catch (error) {
+        console.error('Failed to initialize database for journal entry update:', error);
+        throw new Error('Database initialization failed');
+      }
+    }
+
+    try {
+      // First try with updated_at column
+      await this.db!.runAsync(
+        'UPDATE journal_entries SET content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [content, id]
+      );
+    } catch (error) {
+      console.warn('Failed to update with updated_at column, trying without:', error);
+      try {
+        // Fallback: update without updated_at column
+        await this.db!.runAsync(
+          'UPDATE journal_entries SET content = ? WHERE id = ?',
+          [content, id]
+        );
+      } catch (fallbackError) {
+        console.error('Error updating journal entry:', fallbackError);
+        throw fallbackError;
+      }
+    }
+  }
+
+  async deleteJournalEntry(id: number): Promise<void> {
+    if (!this.db) {
+      console.warn('Database not initialized, attempting to initialize...');
+      try {
+        await this.init();
+      } catch (error) {
+        console.error('Failed to initialize database for journal entry deletion:', error);
+        throw new Error('Database initialization failed');
+      }
+    }
+
+    try {
+      await this.db!.runAsync(
+        'DELETE FROM journal_entries WHERE id = ?',
+        [id]
+      );
+    } catch (error) {
+      console.error('Error deleting journal entry:', error);
+      throw error;
+    }
+  }
+
   // Intention methods
   async createIntention(content: string): Promise<number> {
     if (!this.db) {
@@ -744,6 +858,60 @@ class DatabaseService {
     } catch (error) {
       console.error('Error getting current intention:', error);
       return null;
+    }
+  }
+
+  async updateIntention(id: number, content: string): Promise<void> {
+    if (!this.db) {
+      console.warn('Database not initialized, attempting to initialize...');
+      try {
+        await this.init();
+      } catch (error) {
+        console.error('Failed to initialize database for intention update:', error);
+        throw new Error('Database initialization failed');
+      }
+    }
+
+    try {
+      // First try with updated_at column
+      await this.db!.runAsync(
+        'UPDATE intentions SET content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [content, id]
+      );
+    } catch (error) {
+      console.warn('Failed to update with updated_at column, trying without:', error);
+      try {
+        // Fallback: update without updated_at column
+        await this.db!.runAsync(
+          'UPDATE intentions SET content = ? WHERE id = ?',
+          [content, id]
+        );
+      } catch (fallbackError) {
+        console.error('Error updating intention:', fallbackError);
+        throw fallbackError;
+      }
+    }
+  }
+
+  async deleteIntention(id: number): Promise<void> {
+    if (!this.db) {
+      console.warn('Database not initialized, attempting to initialize...');
+      try {
+        await this.init();
+      } catch (error) {
+        console.error('Failed to initialize database for intention deletion:', error);
+        throw new Error('Database initialization failed');
+      }
+    }
+
+    try {
+      await this.db!.runAsync(
+        'DELETE FROM intentions WHERE id = ?',
+        [id]
+      );
+    } catch (error) {
+      console.error('Error deleting intention:', error);
+      throw error;
     }
   }
 

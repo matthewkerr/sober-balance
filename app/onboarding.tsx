@@ -17,6 +17,7 @@ import { storage } from '../utils/storage';
 import { database } from '../utils/database';
 import { Colors } from '../constants/Colors';
 import { Fonts } from '../constants/Fonts';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -409,9 +410,9 @@ export default function OnboardingScreen() {
       </View>
 
       <View style={styles.sosDemo}>
-        <View style={styles.sosButton}>
-          <Text style={styles.sosButtonText}>SOS</Text>
-        </View>
+        {/* <View style={styles.sosButton}> */}
+        <Ionicons name="pulse-outline" size={100} color={Colors.primary} />
+        {/* </View> */}
         <Text style={styles.sosButtonLabel}>Tap anytime for instant support</Text>
       </View>
 
@@ -443,7 +444,7 @@ export default function OnboardingScreen() {
 
       <View style={styles.sosNote}>
         <Text style={styles.sosNoteText}>
-          SOS Mode will be available on every screen. Your privacy and peace of mind are our priority.
+          SOS Mode will be available on the bottom of the screen. Your privacy and peace of mind are our priority.
         </Text>
       </View>
     </>
@@ -464,11 +465,11 @@ export default function OnboardingScreen() {
           selected={wantsSupportPerson === true}
           onPress={() => setWantsSupportPerson(true)}
         />
-        {/* <SelectableOption
+        <SelectableOption
           title="No, I'll skip for now"
           selected={wantsSupportPerson === false}
           onPress={() => setWantsSupportPerson(false)}
-        /> */}
+        />
       </View>
 
       {wantsSupportPerson === true && (
@@ -637,7 +638,7 @@ export default function OnboardingScreen() {
 
       <View style={styles.finalNote}>
         <Text style={styles.finalNoteText}>
-          Remember: Progress isn't always linear. Every moment of choosing yourself is a victory worth celebrating.
+          Remember: Every moment of choosing yourself is a victory worth celebrating.
         </Text>
       </View>
     </>
@@ -772,16 +773,29 @@ export default function OnboardingScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
       >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          {renderCurrentStep()}
-        </ScrollView>
+        {currentStep === 6 ? (
+          // For the final step, use a fixed layout without ScrollView
+          <View style={styles.finalStepContainer}>
+            {renderCurrentStep()}
+            <View style={styles.actions}>
+              {renderActionButtons()}
+            </View>
+          </View>
+        ) : (
+          // For other steps, use ScrollView
+          <>
+            <ScrollView 
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              {renderCurrentStep()}
+            </ScrollView>
 
-        <View style={styles.actions}>
-          {renderActionButtons()}
-        </View>
+            <View style={styles.actions}>
+              {renderActionButtons()}
+            </View>
+          </>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -1087,7 +1101,7 @@ const styles = StyleSheet.create({
   finalContent: {
     backgroundColor: Colors.surface,
     borderRadius: 20,
-    padding: 32,
+    padding: 10,
     marginBottom: 30,
   },
   finalFeature: {
@@ -1108,7 +1122,7 @@ const styles = StyleSheet.create({
   finalNote: {
     backgroundColor: '#F0F8FF',
     borderRadius: 16,
-    padding: 24,
+    padding: 14,
     borderLeftColor: Colors.primary,
   },
   finalNoteText: {
@@ -1125,5 +1139,10 @@ const styles = StyleSheet.create({
   actions: {
     padding: 20,
     paddingBottom: 40,
+  },
+  finalStepContainer: {
+    flex: 1,
+    justifyContent: 'space-between',
+    padding: 10,
   },
 });
