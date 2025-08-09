@@ -27,7 +27,7 @@ const mockDatabase = {
     return messages[Math.floor(Math.random() * messages.length)];
   },
   logSOSActivation: async (timestamp: string) => {
-    console.log('SOS activated at:', timestamp);
+    // console.log('SOS activated at:', timestamp);
     return Promise.resolve();
   }
 };
@@ -81,7 +81,7 @@ export default function SOSScreen() {
       const randomEncouragement = await mockDatabase.getRandomEncouragement();
       setCurrentMessage(randomEncouragement?.message || 'You are safe. You are strong.');
     } catch (error) {
-      console.error('Error loading encouragement:', error);
+      // console.error('Error loading encouragement:', error);
       setCurrentMessage('You are safe. You are strong.');
     }
   }, []);
@@ -91,7 +91,7 @@ export default function SOSScreen() {
       const timestamp = new Date().toISOString();
       await mockDatabase.logSOSActivation(timestamp);
     } catch (error) {
-      console.error('Error logging SOS activation:', error);
+      // console.error('Error logging SOS activation:', error);
     }
   }, []);
 
@@ -168,12 +168,12 @@ export default function SOSScreen() {
     try {
       await logSOSActivation();
     } catch (error) {
-      console.error('Error in SOS activation:', error);
+      // console.error('Error in SOS activation:', error);
     }
   }, [breathAnimation, logSOSActivation]);
 
   const stopSOSMode = useCallback(() => {
-    console.log('Stopping SOS mode and all animations');
+    // console.log('Stopping SOS mode and all animations');
     
     // Stop breathing cycle
     setIsBreathingActive(false);
@@ -205,7 +205,7 @@ export default function SOSScreen() {
   // Start breathing cycle when isBreathingActive changes to true
   useEffect(() => {
     if (isBreathingActive) {
-      console.log('🫁 Starting breathing cycle...');
+      // console.log('🫁 Starting breathing cycle...');
       startBreathingCycle();
     }
   }, [isBreathingActive, startBreathingCycle]);
@@ -213,12 +213,12 @@ export default function SOSScreen() {
   // Navigation event listeners for cleanup
   useEffect(() => {
     const unsubscribeBlur = navigation.addListener('blur', () => {
-      console.log('Navigation blur event - stopping animations');
+      // console.log('Navigation blur event - stopping animations');
       stopSOSMode();
     });
   
     const unsubscribeBeforeRemove = navigation.addListener('beforeRemove', () => {
-      console.log('Before remove event - stopping animations');
+      // console.log('Before remove event - stopping animations');
       stopSOSMode();
     });
   
@@ -231,13 +231,13 @@ export default function SOSScreen() {
   useFocusEffect(
     React.useCallback(() => {
       // Screen comes into focus
-      console.log('SOS Screen focused - starting animations');
+      // console.log('SOS Screen focused - starting animations');
       loadEncouragement();
       startSOSMode();
   
       return () => {
         // Screen loses focus (navigation away)
-        console.log('SOS Screen unfocused - stopping animations');
+        // console.log('SOS Screen unfocused - stopping animations');
         stopSOSMode();
       };
     }, [loadEncouragement, startSOSMode, stopSOSMode])

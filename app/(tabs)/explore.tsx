@@ -33,31 +33,31 @@ export default function DebugScreen() {
       try {
         onboarded = await storage.getHasCompletedOnboarding();
       } catch (error) {
-        console.error('Error loading onboarding status:', error);
+        // console.error('Error loading onboarding status:', error);
       }
 
       try {
         name = await storage.getUserName();
       } catch (error) {
-        console.error('Error loading user name:', error);
+        // console.error('Error loading user name:', error);
       }
 
       try {
         stats = await database.getEncouragementStats();
       } catch (error) {
-        console.error('Error loading encouragement stats:', error);
+        // console.error('Error loading encouragement stats:', error);
       }
 
       try {
         sobriety = await database.getSobrietyData();
       } catch (error) {
-        console.error('Error loading sobriety data:', error);
+        // console.error('Error loading sobriety data:', error);
       }
 
       try {
         logs = await database.getSOSLogs();
       } catch (error) {
-        console.error('Error loading SOS logs:', error);
+        // console.error('Error loading SOS logs:', error);
       }
       
       setHasOnboarded(onboarded);
@@ -77,7 +77,7 @@ export default function DebugScreen() {
         setSobrietyDays(null);
       }
     } catch (error) {
-      console.error('Error loading storage data:', error);
+      // console.error('Error loading storage data:', error);
     }
   };
 
@@ -148,7 +148,7 @@ export default function DebugScreen() {
               await loadStorageData(); // Reload data
               Alert.alert('Success', 'Database has been reset successfully.');
             } catch (error) {
-              console.error('Error resetting database:', error);
+              // console.error('Error resetting database:', error);
               Alert.alert('Error', 'Failed to reset database.');
             }
           }

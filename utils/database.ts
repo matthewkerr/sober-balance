@@ -77,7 +77,7 @@ class DatabaseService {
         try {
           await this.db.closeAsync();
         } catch (error) {
-          console.warn('Error closing existing database:', error);
+          // console.warn('Error closing existing database:', error);
         }
       }
       
@@ -93,9 +93,9 @@ class DatabaseService {
       // Seed encouragements if table is empty
       await this.seedEncouragements();
       
-      console.log('Database initialized successfully');
+      // console.log('Database initialized successfully');
     } catch (error) {
-      console.error('Error initializing database:', error);
+      // console.error('Error initializing database:', error);
       // Reset database connection on error
       this.db = null;
       throw error;
@@ -116,7 +116,7 @@ class DatabaseService {
         const hasFeelingColumn = tableInfo.some(column => column.name === 'feeling');
         
         if (hasFeelingColumn) {
-          console.log('Migrating daily_check_ins table to remove feeling column...');
+          // console.log('Migrating daily_check_ins table to remove feeling column...');
           
           // Create new table with correct schema
           await this.db.execAsync(`
@@ -143,7 +143,7 @@ class DatabaseService {
           // Rename new table to original name
           await this.db.execAsync('ALTER TABLE daily_check_ins_new RENAME TO daily_check_ins;');
 
-          console.log('Database migration completed successfully');
+          // console.log('Database migration completed successfully');
         }
       }
 
@@ -156,14 +156,14 @@ class DatabaseService {
         const hasUpdatedAtColumn = journalTableInfo.some(column => column.name === 'updated_at');
         
         if (!hasUpdatedAtColumn) {
-          console.log('Adding updated_at column to journal_entries table...');
+          // console.log('Adding updated_at column to journal_entries table...');
           try {
             // First add the column without default
             await this.db.execAsync('ALTER TABLE journal_entries ADD COLUMN updated_at DATETIME');
             // Then update existing rows with current timestamp
             await this.db.execAsync('UPDATE journal_entries SET updated_at = created_at WHERE updated_at IS NULL');
           } catch (error) {
-            console.warn('Failed to add updated_at column to journal_entries:', error);
+            // console.warn('Failed to add updated_at column to journal_entries:', error);
           }
         }
       }
@@ -177,19 +177,19 @@ class DatabaseService {
         const hasUpdatedAtColumn = intentionsTableInfo.some(column => column.name === 'updated_at');
         
         if (!hasUpdatedAtColumn) {
-          console.log('Adding updated_at column to intentions table...');
+          // console.log('Adding updated_at column to intentions table...');
           try {
             // First add the column without default
             await this.db.execAsync('ALTER TABLE intentions ADD COLUMN updated_at DATETIME');
             // Then update existing rows with current timestamp
             await this.db.execAsync('UPDATE intentions SET updated_at = created_at WHERE updated_at IS NULL');
           } catch (error) {
-            console.warn('Failed to add updated_at column to intentions:', error);
+            // console.warn('Failed to add updated_at column to intentions:', error);
           }
         }
       }
     } catch (error) {
-      console.error('Error during database migration:', error);
+      // console.error('Error during database migration:', error);
       // If migration fails, we'll continue with normal table creation
       // which will handle the case where the table doesn't exist
     }
@@ -296,7 +296,7 @@ class DatabaseService {
       );
     `);
 
-    console.log('Tables created successfully');
+    // console.log('Tables created successfully');
   }
 
   private async seedEncouragements(): Promise<void> {
@@ -308,7 +308,7 @@ class DatabaseService {
     );
 
     if (result && result.count === 0) {
-      console.log('Seeding encouragements...');
+      // console.log('Seeding encouragements...');
       
       // Import the seed data
       const encouragementsData = require('../seeders/encouragements_seed.json');
@@ -321,18 +321,18 @@ class DatabaseService {
         );
       }
       
-      console.log(`Seeded ${encouragementsData.length} encouragements`);
+      // console.log(`Seeded ${encouragementsData.length} encouragements`);
     }
   }
 
   // Encouragement methods
   async getRandomEncouragement(): Promise<Encouragement | null> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for encouragement:', error);
+        // console.error('Failed to initialize database for encouragement:', error);
         return null;
       }
     }
@@ -344,18 +344,18 @@ class DatabaseService {
       
       return result || null;
     } catch (error) {
-      console.error('Error getting random encouragement:', error);
+      // console.error('Error getting random encouragement:', error);
       return null;
     }
   }
 
   async getRandomUnseenEncouragement(): Promise<Encouragement | null> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for unseen encouragement:', error);
+        // console.error('Failed to initialize database for unseen encouragement:', error);
         return null;
       }
     }
@@ -367,18 +367,18 @@ class DatabaseService {
       
       return result || null;
     } catch (error) {
-      console.error('Error getting random encouragement:', error);
+      // console.error('Error getting random encouragement:', error);
       return null;
     }
   }
 
   async markEncouragementAsSeen(id: number): Promise<void> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for marking encouragement:', error);
+        // console.error('Failed to initialize database for marking encouragement:', error);
         return;
       }
     }
@@ -389,7 +389,7 @@ class DatabaseService {
         [id]
       );
     } catch (error) {
-      console.error('Error marking encouragement as seen:', error);
+      // console.error('Error marking encouragement as seen:', error);
       throw error;
     }
   }
@@ -401,9 +401,9 @@ class DatabaseService {
       await this.db.runAsync(
         'UPDATE encouragements SET seen = 0, updated_at = CURRENT_TIMESTAMP'
       );
-      console.log('All encouragements reset');
+      // console.log('All encouragements reset');
     } catch (error) {
-      console.error('Error resetting encouragements:', error);
+      // console.error('Error resetting encouragements:', error);
       throw error;
     }
   }
@@ -426,7 +426,7 @@ class DatabaseService {
         unseen: (total?.count || 0) - (seen?.count || 0)
       };
     } catch (error) {
-      console.error('Error getting encouragement stats:', error);
+      // console.error('Error getting encouragement stats:', error);
       return { total: 0, seen: 0, unseen: 0 };
     }
   }
@@ -442,18 +442,18 @@ class DatabaseService {
       );
       return result.lastInsertRowId;
     } catch (error) {
-      console.error('Error creating user:', error);
+      // console.error('Error creating user:', error);
       throw error;
     }
   }
 
   async getUser(): Promise<User | null> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for user:', error);
+        // console.error('Failed to initialize database for user:', error);
         return null;
       }
     }
@@ -464,7 +464,7 @@ class DatabaseService {
       );
       return result || null;
     } catch (error) {
-      console.error('Error getting user:', error);
+      // console.error('Error getting user:', error);
       return null;
     }
   }
@@ -478,7 +478,7 @@ class DatabaseService {
         [hasCompleted ? 1 : 0, setupStep]
       );
     } catch (error) {
-      console.error('Error updating user onboarding:', error);
+      // console.error('Error updating user onboarding:', error);
       throw error;
     }
   }
@@ -492,7 +492,7 @@ class DatabaseService {
         [name]
       );
     } catch (error) {
-      console.error('Error updating user name:', error);
+      // console.error('Error updating user name:', error);
       throw error;
     }
   }
@@ -500,11 +500,11 @@ class DatabaseService {
   // Support person methods
   async saveSupportPerson(name: string, phone: string): Promise<number> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for support person:', error);
+        // console.error('Failed to initialize database for support person:', error);
         throw new Error('Database initialization failed');
       }
     }
@@ -519,18 +519,18 @@ class DatabaseService {
       );
       return result.lastInsertRowId;
     } catch (error) {
-      console.error('Error saving support person:', error);
+      // console.error('Error saving support person:', error);
       throw error;
     }
   }
 
   async getSupportPerson(): Promise<SupportPerson | null> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for support person:', error);
+        // console.error('Failed to initialize database for support person:', error);
         return null;
       }
     }
@@ -541,7 +541,7 @@ class DatabaseService {
       );
       return result || null;
     } catch (error) {
-      console.error('Error getting support person:', error);
+      // console.error('Error getting support person:', error);
       return null;
     }
   }
@@ -560,18 +560,18 @@ class DatabaseService {
       );
       return result.lastInsertRowId;
     } catch (error) {
-      console.error('Error saving sobriety data:', error);
+      // console.error('Error saving sobriety data:', error);
       throw error;
     }
   }
 
   async getSobrietyData(): Promise<SobrietyData | null> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for sobriety data:', error);
+        // console.error('Failed to initialize database for sobriety data:', error);
         return null;
       }
     }
@@ -582,7 +582,7 @@ class DatabaseService {
       );
       return result || null;
     } catch (error) {
-      console.error('Error getting sobriety data:', error);
+      // console.error('Error getting sobriety data:', error);
       return null;
     }
   }
@@ -603,7 +603,7 @@ class DatabaseService {
         );
       }
     } catch (error) {
-      console.error('Error saving user reasons:', error);
+      // console.error('Error saving user reasons:', error);
       throw error;
     }
   }
@@ -611,11 +611,11 @@ class DatabaseService {
   // SOS logging methods
   async logSOSActivation(timestamp: string): Promise<number> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for SOS logging:', error);
+        // console.error('Failed to initialize database for SOS logging:', error);
         return 0;
       }
     }
@@ -627,18 +627,18 @@ class DatabaseService {
       );
       return result.lastInsertRowId;
     } catch (error) {
-      console.error('Error logging SOS activation:', error);
+      // console.error('Error logging SOS activation:', error);
       return 0;
     }
   }
 
   async getSOSLogs(): Promise<{ id: number; timestamp: string }[]> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for SOS logs:', error);
+        // console.error('Failed to initialize database for SOS logs:', error);
         return [];
       }
     }
@@ -649,7 +649,7 @@ class DatabaseService {
       );
       return results;
     } catch (error) {
-      console.error('Error getting SOS logs:', error);
+      // console.error('Error getting SOS logs:', error);
       return [];
     }
   }
@@ -663,7 +663,7 @@ class DatabaseService {
       );
       return results.map(r => r.reason);
     } catch (error) {
-      console.error('Error getting user reasons:', error);
+      // console.error('Error getting user reasons:', error);
       return [];
     }
   }
@@ -671,11 +671,11 @@ class DatabaseService {
   // Journal methods
   async createJournalEntry(content: string): Promise<number> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for journal entry:', error);
+        // console.error('Failed to initialize database for journal entry:', error);
         return 0;
       }
     }
@@ -688,18 +688,18 @@ class DatabaseService {
       );
       return result.lastInsertRowId;
     } catch (error) {
-      console.error('Error creating journal entry:', error);
+      // console.error('Error creating journal entry:', error);
       return 0;
     }
   }
 
   async getJournalEntries(): Promise<JournalEntry[]> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for journal entries:', error);
+        // console.error('Failed to initialize database for journal entries:', error);
         return [];
       }
     }
@@ -710,18 +710,18 @@ class DatabaseService {
       );
       return results;
     } catch (error) {
-      console.error('Error getting journal entries:', error);
+      // console.error('Error getting journal entries:', error);
       return [];
     }
   }
 
   async getJournalEntry(id: number): Promise<JournalEntry | null> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for journal entry:', error);
+        // console.error('Failed to initialize database for journal entry:', error);
         return null;
       }
     }
@@ -733,18 +733,18 @@ class DatabaseService {
       );
       return result || null;
     } catch (error) {
-      console.error('Error getting journal entry:', error);
+      // console.error('Error getting journal entry:', error);
       return null;
     }
   }
 
   async updateJournalEntry(id: number, content: string): Promise<void> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for journal entry update:', error);
+        // console.error('Failed to initialize database for journal entry update:', error);
         throw new Error('Database initialization failed');
       }
     }
@@ -756,7 +756,7 @@ class DatabaseService {
         [content, id]
       );
     } catch (error) {
-      console.warn('Failed to update with updated_at column, trying without:', error);
+      // console.warn('Failed to update with updated_at column, trying without:', error);
       try {
         // Fallback: update without updated_at column
         await this.db!.runAsync(
@@ -764,7 +764,7 @@ class DatabaseService {
           [content, id]
         );
       } catch (fallbackError) {
-        console.error('Error updating journal entry:', fallbackError);
+        // console.error('Error updating journal entry:', fallbackError);
         throw fallbackError;
       }
     }
@@ -772,11 +772,11 @@ class DatabaseService {
 
   async deleteJournalEntry(id: number): Promise<void> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for journal entry deletion:', error);
+        // console.error('Failed to initialize database for journal entry deletion:', error);
         throw new Error('Database initialization failed');
       }
     }
@@ -787,7 +787,7 @@ class DatabaseService {
         [id]
       );
     } catch (error) {
-      console.error('Error deleting journal entry:', error);
+      // console.error('Error deleting journal entry:', error);
       throw error;
     }
   }
@@ -795,11 +795,11 @@ class DatabaseService {
   // Intention methods
   async createIntention(content: string): Promise<number> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for intention:', error);
+        // console.error('Failed to initialize database for intention:', error);
         return 0;
       }
     }
@@ -812,18 +812,18 @@ class DatabaseService {
       );
       return result.lastInsertRowId;
     } catch (error) {
-      console.error('Error creating intention:', error);
+      // console.error('Error creating intention:', error);
       return 0;
     }
   }
 
   async getIntentions(): Promise<Intention[]> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for intentions:', error);
+        // console.error('Failed to initialize database for intentions:', error);
         return [];
       }
     }
@@ -834,18 +834,18 @@ class DatabaseService {
       );
       return results;
     } catch (error) {
-      console.error('Error getting intentions:', error);
+      // console.error('Error getting intentions:', error);
       return [];
     }
   }
 
   async getCurrentIntention(): Promise<Intention | null> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for current intention:', error);
+        // console.error('Failed to initialize database for current intention:', error);
         return null;
       }
     }
@@ -856,18 +856,18 @@ class DatabaseService {
       );
       return result || null;
     } catch (error) {
-      console.error('Error getting current intention:', error);
+      // console.error('Error getting current intention:', error);
       return null;
     }
   }
 
   async updateIntention(id: number, content: string): Promise<void> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for intention update:', error);
+        // console.error('Failed to initialize database for intention update:', error);
         throw new Error('Database initialization failed');
       }
     }
@@ -879,7 +879,7 @@ class DatabaseService {
         [content, id]
       );
     } catch (error) {
-      console.warn('Failed to update with updated_at column, trying without:', error);
+      // console.warn('Failed to update with updated_at column, trying without:', error);
       try {
         // Fallback: update without updated_at column
         await this.db!.runAsync(
@@ -887,7 +887,7 @@ class DatabaseService {
           [content, id]
         );
       } catch (fallbackError) {
-        console.error('Error updating intention:', fallbackError);
+        // console.error('Error updating intention:', fallbackError);
         throw fallbackError;
       }
     }
@@ -895,11 +895,11 @@ class DatabaseService {
 
   async deleteIntention(id: number): Promise<void> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for intention deletion:', error);
+        // console.error('Failed to initialize database for intention deletion:', error);
         throw new Error('Database initialization failed');
       }
     }
@@ -910,7 +910,7 @@ class DatabaseService {
         [id]
       );
     } catch (error) {
-      console.error('Error deleting intention:', error);
+      // console.error('Error deleting intention:', error);
       throw error;
     }
   }
@@ -923,11 +923,11 @@ class DatabaseService {
     thankful: string
   ): Promise<number> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for daily check-in:', error);
+        // console.error('Failed to initialize database for daily check-in:', error);
         return 0;
       }
     }
@@ -940,18 +940,18 @@ class DatabaseService {
       );
       return result.lastInsertRowId;
     } catch (error) {
-      console.error('Error creating daily check-in:', error);
+      // console.error('Error creating daily check-in:', error);
       return 0;
     }
   }
 
   async getTodayCheckIn(): Promise<DailyCheckIn | null> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for today check-in:', error);
+        // console.error('Failed to initialize database for today check-in:', error);
         return null;
       }
     }
@@ -964,18 +964,18 @@ class DatabaseService {
       );
       return result || null;
     } catch (error) {
-      console.error('Error getting today check-in:', error);
+      // console.error('Error getting today check-in:', error);
       return null;
     }
   }
 
   async getCheckInHistory(): Promise<DailyCheckIn[]> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for check-in history:', error);
+        // console.error('Failed to initialize database for check-in history:', error);
         return [];
       }
     }
@@ -986,7 +986,7 @@ class DatabaseService {
       );
       return results;
     } catch (error) {
-      console.error('Error getting check-in history:', error);
+      // console.error('Error getting check-in history:', error);
       return [];
     }
   }
@@ -996,45 +996,45 @@ class DatabaseService {
     if (!this.db) throw new Error('Database not initialized');
 
     try {
-      console.log('=== Database Debug Info ===');
+      // console.log('=== Database Debug Info ===');
       
       const user = await this.getUser();
-      console.log('User:', user);
+      // console.log('User:', user);
       
       const supportPerson = await this.getSupportPerson();
-      console.log('Support Person:', supportPerson);
+      // console.log('Support Person:', supportPerson);
       
       const sobrietyData = await this.getSobrietyData();
-      console.log('Sobriety Data:', sobrietyData);
+      // console.log('Sobriety Data:', sobrietyData);
       
       const userReasons = await this.getUserReasons();
-      console.log('User Reasons:', userReasons);
+      // console.log('User Reasons:', userReasons);
       
       const encouragementStats = await this.getEncouragementStats();
-      console.log('Encouragement Stats:', encouragementStats);
+      // console.log('Encouragement Stats:', encouragementStats);
       
       const journalEntries = await this.getJournalEntries();
-      console.log('Journal Entries:', journalEntries.length);
+      // console.log('Journal Entries:', journalEntries.length);
       
       const intentions = await this.getIntentions();
-      console.log('Intentions:', intentions.length);
+      // console.log('Intentions:', intentions.length);
       
       const checkIns = await this.getCheckInHistory();
-      console.log('Daily Check-ins:', checkIns.length);
+      // console.log('Daily Check-ins:', checkIns.length);
       
-      console.log('===========================');
+      // console.log('===========================');
     } catch (error) {
-      console.error('Error logging database data:', error);
+      // console.error('Error logging database data:', error);
     }
   }
 
   async clearAllData(): Promise<void> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for clearing data:', error);
+        // console.error('Failed to initialize database for clearing data:', error);
         return;
       }
     }
@@ -1050,20 +1050,20 @@ class DatabaseService {
       await this.db!.runAsync('DELETE FROM daily_check_ins');
       await this.db!.runAsync('UPDATE encouragements SET seen = 0');
       
-      console.log('All data cleared');
+      // console.log('All data cleared');
     } catch (error) {
-      console.error('Error clearing all data:', error);
+      // console.error('Error clearing all data:', error);
       throw error;
     }
   }
 
   async clearUserData(): Promise<void> {
     if (!this.db) {
-      console.warn('Database not initialized, attempting to initialize...');
+      // console.warn('Database not initialized, attempting to initialize...');
       try {
         await this.init();
       } catch (error) {
-        console.error('Failed to initialize database for clearing user data:', error);
+        // console.error('Failed to initialize database for clearing user data:', error);
         return;
       }
     }
@@ -1082,9 +1082,9 @@ class DatabaseService {
       // Reset encouragements to unliked state (preserve the seeded messages)
       await this.db!.runAsync('UPDATE encouragements SET seen = 0');
       
-      console.log('User data cleared, encouragements preserved');
+      // console.log('User data cleared, encouragements preserved');
     } catch (error) {
-      console.error('Error clearing user data:', error);
+      // console.error('Error clearing user data:', error);
       throw error;
     }
   }
@@ -1096,7 +1096,7 @@ class DatabaseService {
         try {
           await this.db.closeAsync();
         } catch (error) {
-          console.warn('Error closing database:', error);
+          // console.warn('Error closing database:', error);
         }
       }
       
@@ -1105,9 +1105,9 @@ class DatabaseService {
       // Reinitialize database
       await this.init();
       
-      console.log('Database reset successfully');
+      // console.log('Database reset successfully');
     } catch (error) {
-      console.error('Error resetting database:', error);
+      // console.error('Error resetting database:', error);
       throw error;
     }
   }

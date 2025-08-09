@@ -36,7 +36,7 @@ export default function SupportScreen() {
       const person = await database.getSupportPerson();
       setSupportPerson(person);
     } catch (error) {
-      console.error('Error loading support person:', error);
+      // console.error('Error loading support person:', error);
       Alert.alert('Error', 'Failed to load support person information.');
     } finally {
       setIsLoading(false);
@@ -67,7 +67,7 @@ export default function SupportScreen() {
       setSupportPhone('');
       Alert.alert('Success', 'Support person added successfully!');
     } catch (error) {
-      console.error('Error saving support person:', error);
+      // console.error('Error saving support person:', error);
       Alert.alert('Error', 'Failed to save support person. Please try again.');
     } finally {
       setIsLoading(false);
@@ -107,7 +107,7 @@ export default function SupportScreen() {
                 }
               })
               .catch((error) => {
-                console.error('Error opening phone app:', error);
+                // console.error('Error opening phone app:', error);
                 Alert.alert('Error', 'Failed to open phone app. Please try again.');
               });
           }

@@ -15,7 +15,7 @@ export const storage = {
       const value = await AsyncStorage.getItem(STORAGE_KEYS.HAS_COMPLETED_ONBOARDING);
       return value === 'true';
     } catch (error) {
-      console.error('Error getting onboarding status:', error);
+      // console.error('Error getting onboarding status:', error);
       return false;
     }
   },
@@ -23,9 +23,9 @@ export const storage = {
   async setHasCompletedOnboarding(completed: boolean): Promise<void> {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.HAS_COMPLETED_ONBOARDING, completed.toString());
-      console.log('Onboarding status saved:', completed);
+      // console.log('Onboarding status saved:', completed);
     } catch (error) {
-      console.error('Error saving onboarding status:', error);
+      // console.error('Error saving onboarding status:', error);
       throw error;
     }
   },
@@ -35,7 +35,7 @@ export const storage = {
     try {
       return await AsyncStorage.getItem(STORAGE_KEYS.USER_NAME);
     } catch (error) {
-      console.error('Error getting user name:', error);
+      // console.error('Error getting user name:', error);
       return null;
     }
   },
@@ -43,9 +43,9 @@ export const storage = {
   async setUserName(name: string): Promise<void> {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.USER_NAME, name);
-      console.log('User name saved:', name);
+      // console.log('User name saved:', name);
     } catch (error) {
-      console.error('Error saving user name:', error);
+      // console.error('Error saving user name:', error);
       throw error;
     }
   },
@@ -54,9 +54,9 @@ export const storage = {
   async clearAll(): Promise<void> {
     try {
       await AsyncStorage.clear();
-      console.log('All storage cleared');
+      // console.log('All storage cleared');
     } catch (error) {
-      console.error('Error clearing storage:', error);
+      // console.error('Error clearing storage:', error);
       throw error;
     }
   },
@@ -67,7 +67,7 @@ export const storage = {
       const value = await AsyncStorage.getItem('userReasons');
       return value ? JSON.parse(value) : [];
     } catch (error) {
-      console.error('Error getting user reasons:', error);
+      // console.error('Error getting user reasons:', error);
       return [];
     }
   },
@@ -75,9 +75,9 @@ export const storage = {
   async setUserReasons(reasons: string[]): Promise<void> {
     try {
       await AsyncStorage.setItem('userReasons', JSON.stringify(reasons));
-      console.log('User reasons saved:', reasons);
+      // console.log('User reasons saved:', reasons);
     } catch (error) {
-      console.error('Error saving user reasons:', error);
+      // console.error('Error saving user reasons:', error);
       throw error;
     }
   },
@@ -88,7 +88,7 @@ export const storage = {
       const value = await AsyncStorage.getItem('sobrietyData');
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      console.error('Error getting sobriety data:', error);
+      // console.error('Error getting sobriety data:', error);
       return null;
     }
   },
@@ -96,9 +96,9 @@ export const storage = {
   async setSobrietyData(data: {trackingSobriety: boolean, soberDate?: string}): Promise<void> {
     try {
       await AsyncStorage.setItem('sobrietyData', JSON.stringify(data));
-      console.log('Sobriety data saved:', data);
+      // console.log('Sobriety data saved:', data);
     } catch (error) {
-      console.error('Error saving sobriety data:', error);
+      // console.error('Error saving sobriety data:', error);
       throw error;
     }
   },
@@ -106,9 +106,9 @@ export const storage = {
   async clearSobrietyData(): Promise<void> {
     try {
       await AsyncStorage.removeItem('sobrietyData');
-      console.log('Sobriety data cleared');
+      // console.log('Sobriety data cleared');
     } catch (error) {
-      console.error('Error clearing sobriety data:', error);
+      // console.error('Error clearing sobriety data:', error);
       throw error;
     }
   },
@@ -119,7 +119,7 @@ export const storage = {
       const value = await AsyncStorage.getItem('supportPerson');
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      console.error('Error getting support person:', error);
+      // console.error('Error getting support person:', error);
       return null;
     }
   },
@@ -127,9 +127,9 @@ export const storage = {
   async setSupportPerson(person: {name: string, phone: string}): Promise<void> {
     try {
       await AsyncStorage.setItem('supportPerson', JSON.stringify(person));
-      console.log('Support person saved:', person.name);
+      // console.log('Support person saved:', person.name);
     } catch (error) {
-      console.error('Error saving support person:', error);
+      // console.error('Error saving support person:', error);
       throw error;
     }
   },
@@ -137,9 +137,9 @@ export const storage = {
   async clearSupportPerson(): Promise<void> {
     try {
       await AsyncStorage.removeItem('supportPerson');
-      console.log('Support person cleared');
+      // console.log('Support person cleared');
     } catch (error) {
-      console.error('Error clearing support person:', error);
+      // console.error('Error clearing support person:', error);
       throw error;
     }
   },
@@ -151,7 +151,7 @@ export const storage = {
       const value = await AsyncStorage.getItem('setupStep');
       return value ? parseInt(value, 10) : 0;
     } catch (error) {
-      console.error('Error getting setup step:', error);
+      // console.error('Error getting setup step:', error);
       return 0;
     }
   },
@@ -159,9 +159,9 @@ export const storage = {
   async setSetupStep(step: number): Promise<void> {
     try {
       await AsyncStorage.setItem('setupStep', step.toString());
-      console.log('Setup step saved:', step);
+      // console.log('Setup step saved:', step);
     } catch (error) {
-      console.error('Error saving setup step:', error);
+      // console.error('Error saving setup step:', error);
       throw error;
     }
   },
@@ -173,7 +173,7 @@ export const storage = {
       // Default to true if not set (show by default)
       return value === null ? true : value === 'true';
     } catch (error) {
-      console.error('Error getting sobriety counter visibility:', error);
+      // console.error('Error getting sobriety counter visibility:', error);
       return true; // Default to showing
     }
   },
@@ -181,9 +181,9 @@ export const storage = {
   async setShowSobrietyCounter(show: boolean): Promise<void> {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.SHOW_SOBRIETY_COUNTER, show.toString());
-      console.log('Sobriety counter visibility saved:', show);
+      // console.log('Sobriety counter visibility saved:', show);
     } catch (error) {
-      console.error('Error saving sobriety counter visibility:', error);
+      // console.error('Error saving sobriety counter visibility:', error);
       throw error;
     }
   },
@@ -194,13 +194,13 @@ export const storage = {
       const keys = await AsyncStorage.getAllKeys();
       const stores = await AsyncStorage.multiGet(keys);
       
-      console.log('=== Current Storage Data ===');
+      // console.log('=== Current Storage Data ===');
       stores.forEach(([key, value]) => {
-        console.log(`${key}: ${value}`);
+        // console.log(`${key}: ${value}`);
       });
-      console.log('===========================');
+      // console.log('===========================');
     } catch (error) {
-      console.error('Error logging storage data:', error);
+      // console.error('Error logging storage data:', error);
     }
   }
 };

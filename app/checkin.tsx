@@ -67,7 +67,7 @@ export default function CheckInScreen() {
         { text: 'OK', onPress: () => router.back() }
       ]);
     } catch (error) {
-      console.error('Error saving check-in:', error);
+      // console.error('Error saving check-in:', error);
       Alert.alert('Error', 'Failed to save your check-in. Please try again.');
     } finally {
       setIsLoading(false);

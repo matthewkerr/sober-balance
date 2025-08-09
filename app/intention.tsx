@@ -37,9 +37,9 @@ export default function IntentionScreen() {
     try {
       const intentionList = await database.getIntentions();
       setIntentions(intentionList);
-      console.log('Loaded intentions:', intentionList.length);
+      // console.log('Loaded intentions:', intentionList.length);
     } catch (error) {
-      console.error('Error loading intentions:', error);
+      // console.error('Error loading intentions:', error);
     }
   };
 
@@ -57,7 +57,7 @@ export default function IntentionScreen() {
       await loadIntentions(); // Reload intentions
       Alert.alert('Success', 'Your intention has been saved.');
     } catch (error) {
-      console.error('Error saving intention:', error);
+      // console.error('Error saving intention:', error);
       Alert.alert('Error', 'Failed to save your intention. Please try again.');
     } finally {
       setIsLoading(false);
@@ -106,7 +106,7 @@ export default function IntentionScreen() {
       setEditContent('');
       Alert.alert('Success', 'Intention updated!');
     } catch (error) {
-      console.error('Error updating intention:', error);
+      // console.error('Error updating intention:', error);
       Alert.alert('Error', 'Failed to update intention. Please try again.');
     } finally {
       setIsLoading(false);
@@ -152,7 +152,7 @@ export default function IntentionScreen() {
               await loadIntentions();
               Alert.alert('Success', 'Intention deleted.');
             } catch (error) {
-              console.error('Error deleting intention:', error);
+              // console.error('Error deleting intention:', error);
               Alert.alert('Error', 'Failed to delete intention. Please try again.');
             } finally {
               setIsLoading(false);

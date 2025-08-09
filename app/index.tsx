@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator, Text } from 'react-native';
+import { View, ActivityIndicator, Text, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { storage } from '../utils/storage';
 import { Colors } from '../constants/Colors';
@@ -31,23 +31,23 @@ export default function IndexPage() {
 
   const checkOnboardingStatus = async () => {
     try {
-      console.log('Checking onboarding status...');
+      // console.log('Checking onboarding status...');
       
       // Add a small delay so users can see the loading screen
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       const hasCompletedOnboarding = await storage.getHasCompletedOnboarding();
-      console.log('Has completed onboarding:', hasCompletedOnboarding);
+      //console.log('Has completed onboarding:', hasCompletedOnboarding);
       
       if (hasCompletedOnboarding) {
-        console.log('Navigating to tabs...');
+        //console.log('Navigating to tabs...');
         router.replace('/(tabs)');
       } else {
-        console.log('Navigating to onboarding...');
+        // console.log('Navigating to onboarding...');
         router.replace('/onboarding');
       }
     } catch (error) {
-      console.error('Error checking onboarding status:', error);
+      // console.error('Error checking onboarding status:', error);
       // Default to onboarding if there's an error
       router.replace('/onboarding');
     } finally {
@@ -65,7 +65,12 @@ export default function IndexPage() {
 
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color={Colors.primary} />
+      <Image
+        source={require('../assets/images/icon.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
+      <ActivityIndicator size="large" color={Colors.primary} style={styles.spinner} />
       <Text style={styles.loadingText}>Loading Sober Balance...</Text>
     </View>
   );
@@ -78,6 +83,14 @@ const styles = {
     alignItems: 'center' as const,
     backgroundColor: Colors.background,
     padding: 20,
+  },
+  logo: {
+    width: 300,
+    height: 300,
+    marginBottom: 20,
+  },
+  spinner: {
+    marginTop: 20,
   },
   loadingText: {
     ...Fonts.body,

@@ -37,9 +37,9 @@ export default function JournalScreen() {
     try {
       const journalEntries = await database.getJournalEntries();
       setEntries(journalEntries);
-      console.log('Loaded journal entries:', journalEntries.length);
+      // console.log('Loaded journal entries:', journalEntries.length);
     } catch (error) {
-      console.error('Error loading journal entries:', error);
+      // console.error('Error loading journal entries:', error);
     }
   };
 
@@ -57,7 +57,7 @@ export default function JournalScreen() {
       await loadJournalEntries(); // Reload entries
       Alert.alert('Success', 'Journal entry saved!');
     } catch (error) {
-      console.error('Error saving journal entry:', error);
+      // console.error('Error saving journal entry:', error);
       Alert.alert('Error', 'Failed to save journal entry. Please try again.');
     } finally {
       setIsLoading(false);
@@ -106,7 +106,7 @@ export default function JournalScreen() {
       setEditContent('');
       Alert.alert('Success', 'Journal entry updated!');
     } catch (error) {
-      console.error('Error updating journal entry:', error);
+      // console.error('Error updating journal entry:', error);
       Alert.alert('Error', 'Failed to update journal entry. Please try again.');
     } finally {
       setIsLoading(false);
@@ -152,7 +152,7 @@ export default function JournalScreen() {
               await loadJournalEntries();
               Alert.alert('Success', 'Journal entry deleted.');
             } catch (error) {
-              console.error('Error deleting journal entry:', error);
+              // console.error('Error deleting journal entry:', error);
               Alert.alert('Error', 'Failed to delete journal entry. Please try again.');
             } finally {
               setIsLoading(false);

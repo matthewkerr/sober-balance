@@ -36,7 +36,7 @@ export default function RootLayout() {
       try {
         await database.init();
       } catch (error) {
-        console.error('Failed to initialize database:', error);
+        // console.error('Failed to initialize database:', error);
       }
     };
     

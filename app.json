@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ExpoSdk53",
+    "name": "Sober Balance",
     "slug": "sober-balance",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,7 +14,9 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.yourname.soberbalance",
+      "buildNumber": "1.0.0"
     },
     "android": {
       "adaptiveIcon": {

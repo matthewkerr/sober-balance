@@ -36,9 +36,9 @@ export default function HomeScreen() {
     try {
       const name = await storage.getUserName();
       setUserName(name);
-      console.log('Loaded user name:', name);
+      // console.log('Loaded user name:', name);
     } catch (error) {
-      console.error('Error loading user name:', error);
+      // console.error('Error loading user name:', error);
     }
   };
 
@@ -49,9 +49,9 @@ export default function HomeScreen() {
       setEncouragement(randomEncouragement);
       // Set liked state based on whether it's been seen
       setIsEncouragementLiked(randomEncouragement?.seen || false);
-      console.log('Loaded encouragement:', randomEncouragement);
+      // console.log('Loaded encouragement:', randomEncouragement);
     } catch (error) {
-      console.error('Error loading encouragement:', error);
+      // console.error('Error loading encouragement:', error);
     }
   };
 
@@ -63,7 +63,7 @@ export default function HomeScreen() {
       await database.markEncouragementAsSeen(encouragement.id!);
       setIsEncouragementLiked(true);
     } catch (error) {
-      console.error('Error marking encouragement as seen:', error);
+      // console.error('Error marking encouragement as seen:', error);
     } finally {
       setIsLoading(false);
     }
@@ -82,13 +82,13 @@ export default function HomeScreen() {
         const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
         
         setSobrietyDays(daysDiff);
-        console.log('Sobriety days calculated:', daysDiff);
+        // console.log('Sobriety days calculated:', daysDiff);
       } else {
         setIsTrackingSobriety(false);
         setSobrietyDays(null);
       }
     } catch (error) {
-      console.error('Error loading sobriety data:', error);
+      // console.error('Error loading sobriety data:', error);
       setIsTrackingSobriety(false);
       setSobrietyDays(null);
     }
@@ -98,9 +98,9 @@ export default function HomeScreen() {
     try {
       const intention = await database.getCurrentIntention();
       setCurrentIntention(intention);
-      console.log('Loaded current intention:', intention);
+      // console.log('Loaded current intention:', intention);
     } catch (error) {
-      console.error('Error loading current intention:', error);
+      // console.error('Error loading current intention:', error);
     }
   };
 
@@ -108,9 +108,9 @@ export default function HomeScreen() {
     try {
       const checkIn = await database.getTodayCheckIn();
       setTodayCheckIn(checkIn);
-      console.log('Loaded today check-in:', checkIn);
+      // console.log('Loaded today check-in:', checkIn);
     } catch (error) {
-      console.error('Error loading today check-in:', error);
+      // console.error('Error loading today check-in:', error);
     }
   };
 
@@ -119,7 +119,7 @@ export default function HomeScreen() {
       const showCounter = await storage.getShowSobrietyCounter();
       setShowSobrietyCounter(showCounter);
     } catch (error) {
-      console.error('Error loading sobriety counter setting:', error);
+      // console.error('Error loading sobriety counter setting:', error);
     }
   };
 

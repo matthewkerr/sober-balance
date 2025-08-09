@@ -93,7 +93,7 @@ export default function OnboardingScreen() {
       await storage.setSetupStep(2);
       setCurrentStep(2);
     } catch (error) {
-      console.error('Error saving name:', error);
+      // console.error('Error saving name:', error);
       Alert.alert('Error', 'Failed to save your name. Please try again.');
     } finally {
       setIsLoading(false);
@@ -118,7 +118,7 @@ export default function OnboardingScreen() {
       await storage.setSetupStep(3);
       setCurrentStep(3);
     } catch (error) {
-      console.error('Error saving reasons:', error);
+      // console.error('Error saving reasons:', error);
       Alert.alert('Error', 'Failed to save your reasons. Please try again.');
     } finally {
       setIsLoading(false);
@@ -132,7 +132,7 @@ export default function OnboardingScreen() {
       await storage.setSetupStep(4);
       setCurrentStep(4);
     } catch (error) {
-      console.error('Error moving to next step:', error);
+      // console.error('Error moving to next step:', error);
       Alert.alert('Error', 'Failed to continue. Please try again.');
     } finally {
       setIsLoading(false);
@@ -193,7 +193,7 @@ export default function OnboardingScreen() {
       await storage.setSetupStep(5);
       setCurrentStep(5);
     } catch (error) {
-      console.error('Error saving support person:', error);
+      // console.error('Error saving support person:', error);
       Alert.alert('Error', 'Failed to save support person. Please try again.');
     } finally {
       setIsLoading(false);
@@ -272,7 +272,7 @@ export default function OnboardingScreen() {
       await storage.setSetupStep(6);
       setCurrentStep(6);
     } catch (error) {
-      console.error('Error saving sobriety data:', error);
+      // console.error('Error saving sobriety data:', error);
       Alert.alert('Error', 'Failed to save sobriety tracking. Please try again.');
     } finally {
       setIsLoading(false);
@@ -287,7 +287,7 @@ export default function OnboardingScreen() {
       await database.updateUserOnboarding(true, 6);
       router.replace('/(tabs)');
     } catch (error) {
-      console.error('Error completing onboarding:', error);
+      // console.error('Error completing onboarding:', error);
       Alert.alert('Error', 'Failed to complete setup. Please try again.');
     } finally {
       setIsLoading(false);
@@ -318,7 +318,7 @@ export default function OnboardingScreen() {
               await storage.setHasCompletedOnboarding(true);
               router.replace('/(tabs)');
             } catch (error) {
-              console.error('Error skipping onboarding:', error);
+              // console.error('Error skipping onboarding:', error);
             }
           }
         }
