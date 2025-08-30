@@ -93,7 +93,7 @@ export const storage = {
     }
   },
 
-  async setSobrietyData(data: {trackingSobriety: boolean, soberDate?: string}): Promise<void> {
+  async setSobrietyData(data: {trackingSobriety: boolean, trackingMode: 'sober' | 'trying', soberDate?: string}): Promise<void> {
     try {
       await AsyncStorage.setItem('sobrietyData', JSON.stringify(data));
       // console.log('Sobriety data saved:', data);

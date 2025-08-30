@@ -3,21 +3,21 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Alert,
-  ScrollView,
+  TouchableOpacity,
   SafeAreaView,
-  Share,
-  TextInput,
+  ScrollView,
   Modal,
+  TextInput,
+  Share,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { database, SupportPerson } from '../../utils/database';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { database } from '../../utils/database';
 import { storage } from '../../utils/storage';
 import { Colors } from '../../constants/Colors';
 import { Fonts } from '../../constants/Fonts';
+import { calculateSobrietyDaysByDate } from '../../utils/database';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -31,7 +31,7 @@ export default function SettingsScreen() {
     checkIns: 0,
     sosActivations: 0,
   });
-  const [supportPerson, setSupportPerson] = useState<SupportPerson | null>(null);
+  const [supportPerson, setSupportPerson] = useState<any | null>(null);
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [supportName, setSupportName] = useState('');
   const [supportPhone, setSupportPhone] = useState('');
@@ -39,22 +39,22 @@ export default function SettingsScreen() {
   const [userName, setUserName] = useState<string>('');
   const [showUsernameModal, setShowUsernameModal] = useState(false);
   const [newUsername, setNewUsername] = useState('');
-  const [sobrietyData, setSobrietyData] = useState<{tracking_sobriety: boolean; sober_date?: string} | null>(null);
+  // Sobriety tracking state
+  const [sobrietyData, setSobrietyData] = useState<any>(null);
   const [showSobrietyModal, setShowSobrietyModal] = useState(false);
   const [wantsTracking, setWantsTracking] = useState<boolean | null>(null);
+  const [trackingMode, setTrackingMode] = useState<'sober' | 'trying' | null>(null);
   const [soberYears, setSoberYears] = useState('');
   const [soberMonths, setSoberMonths] = useState('');
   const [soberDays, setSoberDays] = useState('');
 
-  useFocusEffect(
-    React.useCallback(() => {
-      loadDataStats();
-      loadSupportPerson();
-      loadSobrietyCounterSetting();
-      loadUserName();
-      loadSobrietyData();
-    }, [])
-  );
+  useEffect(() => {
+    loadDataStats();
+    loadSupportPerson();
+    loadSobrietyCounterSetting();
+    loadUserName();
+    loadSobrietyData();
+  }, []);
 
   const loadDataStats = async () => {
     try {
@@ -67,10 +67,8 @@ export default function SettingsScreen() {
       const sobrietyData = await database.getSobrietyData();
       let sobrietyDays = 0;
       if (sobrietyData?.tracking_sobriety && sobrietyData?.sober_date) {
-        const soberDate = new Date(sobrietyData.sober_date);
-        const now = new Date();
-        const timeDiff = now.getTime() - soberDate.getTime();
-        sobrietyDays = Math.floor(timeDiff / (1000 * 3600 * 24));
+        // Calculate days since sober date using calendar days
+        sobrietyDays = calculateSobrietyDaysByDate(sobrietyData.sober_date);
       }
 
       // Get other data counts
@@ -129,6 +127,15 @@ export default function SettingsScreen() {
     try {
       const data = await database.getSobrietyData();
       setSobrietyData(data);
+      
+      // Set the tracking mode state based on existing data
+      if (data && data.tracking_sobriety) {
+        setWantsTracking(true);
+        setTrackingMode(data.tracking_mode || 'sober');
+      } else {
+        setWantsTracking(false);
+        setTrackingMode('sober');
+      }
     } catch (error) {
       // console.error('Error loading sobriety data:', error);
     }
@@ -195,7 +202,12 @@ export default function SettingsScreen() {
 
   const handleSaveSobrietyTracking = async () => {
     if (wantsTracking === null) {
-      Alert.alert('Selection Required', 'Please choose whether you want to track your sobriety.');
+      Alert.alert('Selection Required', 'Please choose whether you want to track your progress.');
+      return;
+    }
+
+    if (wantsTracking && trackingMode === null) {
+      Alert.alert('Tracking Mode Required', 'Please select whether you want to track days sober or days trying to be sober.');
       return;
     }
 
@@ -231,14 +243,16 @@ export default function SettingsScreen() {
         const soberDate = calculateSoberDate();
         await storage.setSobrietyData({
           trackingSobriety: true,
+          trackingMode: trackingMode!,
           soberDate: soberDate
         });
-        await database.saveSobrietyData(true, soberDate);
+        await database.saveSobrietyData(true, trackingMode!, soberDate);
       } else {
         await storage.setSobrietyData({
-          trackingSobriety: false
+          trackingSobriety: false,
+          trackingMode: 'sober' // Default value when not tracking
         });
-        await database.saveSobrietyData(false);
+        await database.saveSobrietyData(false, 'sober');
       }
       
       await loadSobrietyData();
@@ -300,8 +314,11 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               setIsLoading(true);
-              await database.saveSobrietyData(false);
-              await storage.setSobrietyData({ trackingSobriety: false });
+              await database.saveSobrietyData(false, 'sober');
+              await storage.setSobrietyData({ 
+                trackingSobriety: false,
+                trackingMode: 'sober'
+              });
               await loadDataStats();
               Alert.alert('Success', 'Sobriety tracking has been reset.');
             } catch (error) {
@@ -342,6 +359,31 @@ export default function SettingsScreen() {
         }
       ]
     );
+  };
+
+  const handleBackupData = async () => {
+    try {
+      setIsLoading(true);
+      await database.manualBackup();
+      Alert.alert('Success', 'Data backed up successfully');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to backup data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRestoreData = async () => {
+    try {
+      setIsLoading(true);
+      await database.manualRestore();
+      await loadDataStats(); // Reload the data stats
+      Alert.alert('Success', 'Data restored successfully');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to restore data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleExportData = async () => {
@@ -594,7 +636,7 @@ export default function SettingsScreen() {
                 <Text style={styles.sobrietyInfoTitle}>Tracking Enabled</Text>
               </View>
               <Text style={styles.sobrietyInfoDays}>
-                {dataStats.sobrietyDays} days sober
+                {dataStats.sobrietyDays} {sobrietyData.tracking_mode === 'trying' ? 'days trying' : 'days sober'}
               </Text>
               <Text style={styles.sobrietyInfoDate}>
                 Since {sobrietyData.sober_date ? new Date(sobrietyData.sober_date).toLocaleDateString() : 'Unknown'}
@@ -628,6 +670,18 @@ export default function SettingsScreen() {
           <Text style={styles.sectionTitle}>Data Management</Text>
           
           <SettingItem
+            title="Backup Data"
+            subtitle="Create a backup of all your data"
+            onPress={handleBackupData}
+          />
+          
+          <SettingItem
+            title="Restore Data"
+            subtitle="Restore data from backup if needed"
+            onPress={handleRestoreData}
+          />
+          
+          <SettingItem
             title="Export All Data"
             subtitle="Download a copy of all your data"
             onPress={handleExportData}
@@ -641,7 +695,7 @@ export default function SettingsScreen() {
           
           <SettingItem
             title="Reset Sobriety Days"
-            subtitle={`Currently ${dataStats.sobrietyDays} days sober`}
+            subtitle={`Currently ${dataStats.sobrietyDays} ${sobrietyData?.tracking_mode === 'trying' ? 'days trying' : 'days sober'}`}
             onPress={handleResetSobriety}
           />
           
@@ -786,11 +840,26 @@ export default function SettingsScreen() {
             
             <View style={styles.sobrietyOptionsSection}>
               <TouchableOpacity
-                style={[styles.sobrietyOption, wantsTracking === true && styles.sobrietyOptionSelected]}
-                onPress={() => setWantsTracking(true)}
+                style={[styles.sobrietyOption, wantsTracking === true && trackingMode === 'sober' && styles.sobrietyOptionSelected]}
+                onPress={() => {
+                  setWantsTracking(true);
+                  setTrackingMode('sober');
+                }}
               >
-                <Text style={[styles.sobrietyOptionText, wantsTracking === true && styles.sobrietyOptionTextSelected]}>
-                  Yes, I'd like to track my sobriety
+                <Text style={[styles.sobrietyOptionText, wantsTracking === true && trackingMode === 'sober' && styles.sobrietyOptionTextSelected]}>
+                  Yes, I'd like to track my days sober
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.sobrietyOption, wantsTracking === true && trackingMode === 'trying' && styles.sobrietyOptionSelected]}
+                onPress={() => {
+                  setWantsTracking(true);
+                  setTrackingMode('trying');
+                }}
+              >
+                <Text style={[styles.sobrietyOptionText, wantsTracking === true && trackingMode === 'trying' && styles.sobrietyOptionTextSelected]}>
+                  Yes, I'd like to track my days trying to be sober
                 </Text>
               </TouchableOpacity>
               
@@ -806,8 +875,18 @@ export default function SettingsScreen() {
 
             {wantsTracking === true && (
               <View style={styles.trackingDetailsSection}>
-                <Text style={styles.trackingDetailsTitle}>How long have you been sober?</Text>
-                <Text style={styles.trackingSubtitle}>Enter your current sobriety time</Text>
+                <Text style={styles.trackingDetailsTitle}>
+                  {trackingMode === 'sober' 
+                    ? 'How long have you been sober?' 
+                    : 'How long have you been trying to be sober?'
+                  }
+                </Text>
+                <Text style={styles.trackingSubtitle}>
+                  {trackingMode === 'sober'
+                    ? 'Enter your current sobriety time'
+                    : 'Enter how long you\'ve been working on your sobriety'
+                  }
+                </Text>
                 
                 <View style={styles.timeInputsContainer}>
                   <View style={styles.timeInputGroup}>
@@ -855,7 +934,10 @@ export default function SettingsScreen() {
 
                 <View style={styles.trackingNote}>
                   <Text style={styles.trackingNoteText}>
-                    🌟 Every day counts! We'll help you celebrate your milestones and progress.
+                    {trackingMode === 'sober'
+                      ? '🌟 Every day counts! We\'ll help you celebrate your milestones and progress.'
+                      : '🌟 Every effort counts! We\'ll help you celebrate your commitment and progress.'
+                    }
                   </Text>
                 </View>
               </View>

@@ -36,24 +36,40 @@ export default function IndexPage() {
       // Add a small delay so users can see the loading screen
       await new Promise(resolve => setTimeout(resolve, 1500));
       
+      // console.log('Getting onboarding status from storage...');
       const hasCompletedOnboarding = await storage.getHasCompletedOnboarding();
       //console.log('Has completed onboarding:', hasCompletedOnboarding);
       
       if (hasCompletedOnboarding) {
         //console.log('Navigating to tabs...');
-        router.replace('/(tabs)');
+        router.push('/(tabs)');
       } else {
-        // console.log('Navigating to onboarding...');
-        router.replace('/onboarding');
+        //console.log('Navigating to onboarding...');
+        router.push('/onboarding');
       }
     } catch (error) {
-      // console.error('Error checking onboarding status:', error);
+      //console.error('Error checking onboarding status:', error);
       // Default to onboarding if there's an error
-      router.replace('/onboarding');
+      //console.log('Falling back to onboarding due to error');
+      router.push('/onboarding');
     } finally {
+      //console.log('Setting isChecking to false');
       setIsChecking(false);
     }
   };
+
+  // Add a fallback timeout to prevent getting stuck
+  useEffect(() => {
+    const fallbackTimer = setTimeout(() => {
+      if (isChecking) {
+        //console.log('Fallback: Navigating to onboarding due to timeout');
+        router.push('/onboarding');
+        setIsChecking(false);
+      }
+    }, 8000); // 8 second fallback
+
+    return () => clearTimeout(fallbackTimer);
+  }, [isChecking, router]);
 
   if (!isChecking && !router) {
     return (
@@ -81,7 +97,7 @@ const styles = {
     flex: 1,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
-    backgroundColor: Colors.background,
+    backgroundColor: '#ffffff',
     padding: 20,
   },
   logo: {

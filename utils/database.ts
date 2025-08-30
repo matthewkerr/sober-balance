@@ -1,5 +1,33 @@
 import * as SQLite from 'expo-sqlite';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Utility function to calculate days by calendar date (not exact 24-hour periods)
+// This means if someone starts on Thursday night and checks on Friday morning,
+// it will count as 1 day (not 0.5 days like the exact time calculation would)
+export function calculateSobrietyDaysByDate(soberDate: string): number {
+  const sober = new Date(soberDate);
+  const now = new Date();
+  
+  // Reset time to start of day for both dates (midnight)
+  const soberStart = new Date(sober.getFullYear(), sober.getMonth(), sober.getDate());
+  const nowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  // Calculate difference in days
+  const timeDiff = nowStart.getTime() - soberStart.getTime();
+  const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+  
+  // Debug logging (can be removed later)
+  // console.log('Sobriety calculation:', {
+  //   soberDate: soberDate,
+  //   soberStart: soberStart.toISOString(),
+  //   nowStart: nowStart.toISOString(),
+  //   timeDiff: timeDiff,
+  //   daysDiff: daysDiff
+  // });
+  
+  return daysDiff;
+}
 
 // Database interface
 export interface Encouragement {
@@ -30,6 +58,7 @@ export interface SupportPerson {
 export interface SobrietyData {
   id?: number;
   tracking_sobriety: boolean;
+  tracking_mode: 'sober' | 'trying'; // 'sober' for days sober, 'trying' for days trying to be sober
   sober_date?: string;
   created_at?: string;
   updated_at?: string;
@@ -92,6 +121,9 @@ class DatabaseService {
       
       // Seed encouragements if table is empty
       await this.seedEncouragements();
+      
+      // Try to restore data from backup if database is empty
+      await this.restoreDataIfNeeded();
       
       // console.log('Database initialized successfully');
     } catch (error) {
@@ -188,6 +220,27 @@ class DatabaseService {
           }
         }
       }
+
+      // Add tracking_mode column to sobriety_data table if it doesn't exist
+      const sobrietyTableInfo = await this.db.getAllAsync<{ name: string; type: string }>(
+        "PRAGMA table_info(sobriety_data)"
+      );
+      
+      if (sobrietyTableInfo.length > 0) {
+        const hasTrackingModeColumn = sobrietyTableInfo.some(column => column.name === 'tracking_mode');
+        
+        if (!hasTrackingModeColumn) {
+          // console.log('Adding tracking_mode column to sobriety_data table...');
+          try {
+            // Add the column with default value 'sober' for existing data
+            await this.db.execAsync('ALTER TABLE sobriety_data ADD COLUMN tracking_mode TEXT DEFAULT "sober"');
+            // Update existing rows to have 'sober' as the default tracking mode
+            await this.db.execAsync('UPDATE sobriety_data SET tracking_mode = "sober" WHERE tracking_mode IS NULL');
+          } catch (error) {
+            // console.warn('Failed to add tracking_mode column to sobriety_data:', error);
+          }
+        }
+      }
     } catch (error) {
       // console.error('Error during database migration:', error);
       // If migration fails, we'll continue with normal table creation
@@ -237,6 +290,7 @@ class DatabaseService {
       CREATE TABLE IF NOT EXISTS sobriety_data (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         tracking_sobriety BOOLEAN DEFAULT 0,
+        tracking_mode TEXT NOT NULL,
         sober_date TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -477,6 +531,13 @@ class DatabaseService {
         'UPDATE users SET has_completed_onboarding = ?, setup_step = ?, updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT id FROM users ORDER BY id DESC LIMIT 1)',
         [hasCompleted ? 1 : 0, setupStep]
       );
+      
+      // Backup data after successful update
+      try {
+        await this.backupData();
+      } catch (error) {
+        // console.warn('Failed to backup data after user onboarding update:', error);
+      }
     } catch (error) {
       // console.error('Error updating user onboarding:', error);
       throw error;
@@ -491,6 +552,13 @@ class DatabaseService {
         'UPDATE users SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT id FROM users ORDER BY id DESC LIMIT 1)',
         [name]
       );
+      
+      // Backup data after successful update
+      try {
+        await this.backupData();
+      } catch (error) {
+        // console.warn('Failed to backup data after user name update:', error);
+      }
     } catch (error) {
       // console.error('Error updating user name:', error);
       throw error;
@@ -517,6 +585,14 @@ class DatabaseService {
         'INSERT INTO support_persons (name, phone) VALUES (?, ?)',
         [name, phone]
       );
+      
+      // Backup data after successful save
+      try {
+        await this.backupData();
+      } catch (error) {
+        // console.warn('Failed to backup data after support person save:', error);
+      }
+      
       return result.lastInsertRowId;
     } catch (error) {
       // console.error('Error saving support person:', error);
@@ -547,7 +623,7 @@ class DatabaseService {
   }
 
   // Sobriety data methods
-  async saveSobrietyData(trackingSobriety: boolean, soberDate?: string): Promise<number> {
+  async saveSobrietyData(trackingSobriety: boolean, trackingMode: 'sober' | 'trying', soberDate?: string): Promise<number> {
     if (!this.db) throw new Error('Database not initialized');
 
     try {
@@ -555,9 +631,17 @@ class DatabaseService {
       await this.db.runAsync('DELETE FROM sobriety_data');
       
       const result = await this.db.runAsync(
-        'INSERT INTO sobriety_data (tracking_sobriety, sober_date) VALUES (?, ?)',
-        [trackingSobriety ? 1 : 0, soberDate || null]
+        'INSERT INTO sobriety_data (tracking_sobriety, tracking_mode, sober_date) VALUES (?, ?, ?)',
+        [trackingSobriety ? 1 : 0, trackingMode, soberDate || null]
       );
+      
+      // Backup data after successful save
+      try {
+        await this.backupData();
+      } catch (error) {
+        // console.warn('Failed to backup data after sobriety data save:', error);
+      }
+      
       return result.lastInsertRowId;
     } catch (error) {
       // console.error('Error saving sobriety data:', error);
@@ -602,6 +686,13 @@ class DatabaseService {
           [reason]
         );
       }
+      
+      // Backup data after successful save
+      try {
+        await this.backupData();
+      } catch (error) {
+        // console.warn('Failed to backup data after user reasons save:', error);
+      }
     } catch (error) {
       // console.error('Error saving user reasons:', error);
       throw error;
@@ -625,6 +716,14 @@ class DatabaseService {
         'INSERT INTO sos_logs (timestamp) VALUES (?)',
         [timestamp]
       );
+      
+      // Backup data after successful logging
+      try {
+        await this.backupData();
+      } catch (error) {
+        // console.warn('Failed to backup data after SOS log creation:', error);
+      }
+      
       return result.lastInsertRowId;
     } catch (error) {
       // console.error('Error logging SOS activation:', error);
@@ -686,6 +785,14 @@ class DatabaseService {
         'INSERT INTO journal_entries (content, timestamp) VALUES (?, ?)',
         [content, timestamp]
       );
+      
+      // Backup data after successful creation
+      try {
+        await this.backupData();
+      } catch (error) {
+        // console.warn('Failed to backup data after journal entry creation:', error);
+      }
+      
       return result.lastInsertRowId;
     } catch (error) {
       // console.error('Error creating journal entry:', error);
@@ -768,6 +875,13 @@ class DatabaseService {
         throw fallbackError;
       }
     }
+    
+    // Backup data after successful update
+    try {
+      await this.backupData();
+    } catch (error) {
+      // console.warn('Failed to backup data after journal entry update:', error);
+    }
   }
 
   async deleteJournalEntry(id: number): Promise<void> {
@@ -786,6 +900,13 @@ class DatabaseService {
         'DELETE FROM journal_entries WHERE id = ?',
         [id]
       );
+      
+      // Backup data after successful deletion
+      try {
+        await this.backupData();
+      } catch (error) {
+        // console.warn('Failed to backup data after journal entry deletion:', error);
+      }
     } catch (error) {
       // console.error('Error deleting journal entry:', error);
       throw error;
@@ -810,6 +931,14 @@ class DatabaseService {
         'INSERT INTO intentions (content, timestamp) VALUES (?, ?)',
         [content, timestamp]
       );
+      
+      // Backup data after successful creation
+      try {
+        await this.backupData();
+      } catch (error) {
+        // console.warn('Failed to backup data after intention creation:', error);
+      }
+      
       return result.lastInsertRowId;
     } catch (error) {
       // console.error('Error creating intention:', error);
@@ -891,6 +1020,13 @@ class DatabaseService {
         throw fallbackError;
       }
     }
+    
+    // Backup data after successful update
+    try {
+      await this.backupData();
+    } catch (error) {
+      // console.warn('Failed to backup data after intention update:', error);
+    }
   }
 
   async deleteIntention(id: number): Promise<void> {
@@ -909,6 +1045,13 @@ class DatabaseService {
         'DELETE FROM intentions WHERE id = ?',
         [id]
       );
+      
+      // Backup data after successful deletion
+      try {
+        await this.backupData();
+      } catch (error) {
+        // console.warn('Failed to backup data after intention deletion:', error);
+      }
     } catch (error) {
       // console.error('Error deleting intention:', error);
       throw error;
@@ -938,6 +1081,14 @@ class DatabaseService {
         'INSERT INTO daily_check_ins (goal, energy, tone, thankful, date) VALUES (?, ?, ?, ?, ?)',
         [goal, energy, tone, thankful, today]
       );
+      
+      // Backup data after successful creation
+      try {
+        await this.backupData();
+      } catch (error) {
+        // console.warn('Failed to backup data after daily check-in creation:', error);
+      }
+      
       return result.lastInsertRowId;
     } catch (error) {
       // console.error('Error creating daily check-in:', error);
@@ -1050,6 +1201,13 @@ class DatabaseService {
       await this.db!.runAsync('DELETE FROM daily_check_ins');
       await this.db!.runAsync('UPDATE encouragements SET seen = 0');
       
+      // Backup data after clearing (to preserve the cleared state)
+      try {
+        await this.backupData();
+      } catch (error) {
+        // console.warn('Failed to backup data after clearing:', error);
+      }
+      
       // console.log('All data cleared');
     } catch (error) {
       // console.error('Error clearing all data:', error);
@@ -1082,6 +1240,13 @@ class DatabaseService {
       // Reset encouragements to unliked state (preserve the seeded messages)
       await this.db!.runAsync('UPDATE encouragements SET seen = 0');
       
+      // Backup data after clearing (to preserve the cleared state)
+      try {
+        await this.backupData();
+      } catch (error) {
+        // console.warn('Failed to backup data after user data clearing:', error);
+      }
+      
       // console.log('User data cleared, encouragements preserved');
     } catch (error) {
       // console.error('Error clearing user data:', error);
@@ -1108,6 +1273,185 @@ class DatabaseService {
       // console.log('Database reset successfully');
     } catch (error) {
       // console.error('Error resetting database:', error);
+      throw error;
+    }
+  }
+
+  // Backup all user data to AsyncStorage to prevent data loss during app updates
+  async backupData(): Promise<void> {
+    if (!this.db) {
+      // console.warn('Database not initialized, attempting to initialize...');
+      try {
+        await this.init();
+      } catch (error) {
+        // console.error('Failed to initialize database for backup:', error);
+        return;
+      }
+    }
+
+    try {
+      // Get all user data
+      const user = await this.getUser();
+      const supportPerson = await this.getSupportPerson();
+      const sobrietyData = await this.getSobrietyData();
+      const userReasons = await this.getUserReasons();
+      const journalEntries = await this.getJournalEntries();
+      const intentions = await this.getIntentions();
+      const dailyCheckIns = await this.getCheckInHistory();
+      const sosLogs = await this.getSOSLogs();
+
+      // Create backup object
+      const backup = {
+        timestamp: new Date().toISOString(),
+        user,
+        supportPerson,
+        sobrietyData,
+        userReasons,
+        journalEntries,
+        intentions,
+        dailyCheckIns,
+        sosLogs
+      };
+
+      // Save to AsyncStorage
+      await AsyncStorage.setItem('sober_balance_backup', JSON.stringify(backup));
+      // console.log('Data backed up successfully');
+    } catch (error) {
+      // console.error('Error backing up data:', error);
+    }
+  }
+
+  // Restore data from backup if database is empty
+  async restoreDataIfNeeded(): Promise<void> {
+    if (!this.db) {
+      // console.warn('Database not initialized, attempting to initialize...');
+      try {
+        await this.init();
+      } catch (error) {
+        // console.error('Failed to initialize database for restore:', error);
+        return;
+      }
+    }
+
+    try {
+      // Check if database has any user data
+      const userCount = await this.db!.getFirstAsync<{ count: number }>(
+        'SELECT COUNT(*) as count FROM users'
+      );
+      
+      const journalCount = await this.db!.getFirstAsync<{ count: number }>(
+        'SELECT COUNT(*) as count FROM journal_entries'
+      );
+
+      // If database has data, no need to restore
+      if (userCount && userCount.count > 0 && journalCount && journalCount.count > 0) {
+        // console.log('Database has data, no restore needed');
+        return;
+      }
+
+      // Try to restore from backup
+      const backupData = await AsyncStorage.getItem('sober_balance_backup');
+      if (!backupData) {
+        // console.log('No backup data found');
+        return;
+      }
+
+      const backup = JSON.parse(backupData);
+      // console.log('Restoring data from backup...');
+
+      // Restore data in the correct order (respecting foreign key constraints)
+      if (backup.user) {
+        await this.db!.runAsync(
+          'INSERT OR REPLACE INTO users (id, name, has_completed_onboarding, setup_step, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+          [backup.user.id, backup.user.name, backup.user.has_completed_onboarding, backup.user.setup_step, backup.user.created_at, backup.user.updated_at]
+        );
+      }
+
+      if (backup.supportPerson) {
+        await this.db!.runAsync(
+          'INSERT OR REPLACE INTO support_persons (id, name, phone, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
+          [backup.supportPerson.id, backup.supportPerson.name, backup.supportPerson.phone, backup.supportPerson.created_at, backup.supportPerson.updated_at]
+        );
+      }
+
+      if (backup.sobrietyData && backup.sobrietyData.length > 0) {
+        for (const data of backup.sobrietyData) {
+          await this.db!.runAsync(
+            'INSERT OR REPLACE INTO sobriety_data (id, tracking_sobriety, tracking_mode, sober_date, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+            [data.id, data.tracking_sobriety, data.tracking_mode || 'sober', data.sober_date, data.created_at, data.updated_at]
+          );
+        }
+      }
+
+      if (backup.userReasons && backup.userReasons.length > 0) {
+        for (const reason of backup.userReasons) {
+          await this.db!.runAsync(
+            'INSERT OR REPLACE INTO user_reasons (id, reason, created_at) VALUES (?, ?, ?)',
+            [reason.id, reason.reason, reason.created_at]
+          );
+        }
+      }
+
+      if (backup.journalEntries && backup.journalEntries.length > 0) {
+        for (const entry of backup.journalEntries) {
+          await this.db!.runAsync(
+            'INSERT OR REPLACE INTO journal_entries (id, content, timestamp, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
+            [entry.id, entry.content, entry.timestamp, entry.created_at, entry.updated_at || entry.created_at]
+          );
+        }
+      }
+
+      if (backup.intentions && backup.intentions.length > 0) {
+        for (const intention of backup.intentions) {
+          await this.db!.runAsync(
+            'INSERT OR REPLACE INTO intentions (id, content, timestamp, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
+            [intention.id, intention.content, intention.timestamp, intention.created_at, intention.updated_at || intention.created_at]
+          );
+        }
+      }
+
+      if (backup.dailyCheckIns && backup.dailyCheckIns.length > 0) {
+        for (const checkIn of backup.dailyCheckIns) {
+          await this.db!.runAsync(
+            'INSERT OR REPLACE INTO daily_check_ins (id, goal, energy, tone, thankful, date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [checkIn.id, checkIn.goal, checkIn.energy, checkIn.tone, checkIn.thankful, checkIn.date, checkIn.created_at]
+          );
+        }
+      }
+
+      if (backup.sosLogs && backup.sosLogs.length > 0) {
+        for (const log of backup.sosLogs) {
+          await this.db!.runAsync(
+            'INSERT OR REPLACE INTO sos_logs (id, timestamp, created_at) VALUES (?, ?, ?)',
+            [log.id, log.timestamp, log.created_at]
+          );
+        }
+      }
+
+      // console.log('Data restored successfully from backup');
+    } catch (error) {
+      // console.error('Error restoring data:', error);
+    }
+  }
+
+  // Manual backup trigger for testing
+  async manualBackup(): Promise<void> {
+    try {
+      await this.backupData();
+      // console.log('Manual backup completed successfully');
+    } catch (error) {
+      // console.error('Manual backup failed:', error);
+      throw error;
+    }
+  }
+
+  // Manual restore trigger for testing
+  async manualRestore(): Promise<void> {
+    try {
+      await this.restoreDataIfNeeded();
+      // console.log('Manual restore completed successfully');
+    } catch (error) {
+      // console.error('Manual restore failed:', error);
       throw error;
     }
   }

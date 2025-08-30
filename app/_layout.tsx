@@ -18,7 +18,7 @@ export {
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+  initialRouteName: 'index',
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -34,9 +34,20 @@ export default function RootLayout() {
   useEffect(() => {
     const initDatabase = async () => {
       try {
-        await database.init();
+        // console.log('Initializing database...');
+        
+        // Add a timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Database initialization timeout')), 5000);
+        });
+        
+        const initPromise = database.init();
+        
+        await Promise.race([initPromise, timeoutPromise]);
+        //console.log('Database initialized successfully');
       } catch (error) {
         // console.error('Failed to initialize database:', error);
+        // Continue even if database fails to initialize
       }
     };
     
@@ -50,6 +61,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded) {
+      //console.log('Fonts loaded, hiding splash screen');
       SplashScreen.hideAsync();
     }
   }, [loaded]);

@@ -1,27 +1,31 @@
 {
   "expo": {
-    "name": "Sober Balance",
+    "name": "sober-balance",
     "slug": "sober-balance",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "exposdk53",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.yourname.soberbalance",
-      "buildNumber": "1.0.0"
+      "bundleIdentifier": "com.matthewkerr.soberbalance",
+      "buildNumber": "1.1.0",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#ffffff",
+        "package": "com.matthewkerr.soberbalance"
       },
       "edgeToEdgeEnabled": true
     },

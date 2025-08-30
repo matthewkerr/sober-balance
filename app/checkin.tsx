@@ -278,16 +278,17 @@ const styles = StyleSheet.create({
   optionsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 12, // Increased gap between buttons
   },
   optionButton: {
     flex: 1,
-    padding: 16,
+    padding: 16, // Increased padding for better text spacing
     backgroundColor: Colors.surface,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
+    minWidth: 90, // Increased minimum width for better text fit
   },
   optionButtonSelected: {
     borderColor: Colors.primary,
@@ -297,6 +298,8 @@ const styles = StyleSheet.create({
     ...Fonts.body,
     color: Colors.text,
     fontWeight: '500',
+    textAlign: 'center',
+    fontSize: 14, // Slightly smaller font size to ensure fit
   },
   optionTextSelected: {
     color: Colors.primary,

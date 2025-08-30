@@ -9,6 +9,7 @@ import {
   Linking,
   TextInput,
   Modal,
+  ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -121,23 +122,34 @@ export default function SupportScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={[styles.statusBarBackground, { height: insets.top }]} />
         <View style={styles.container}>
-          <View style={styles.content}>
-            <Text style={styles.title}>Support Person</Text>
-            <View style={styles.noSupportCard}>
-              <Text style={styles.noSupportIcon}>❤️</Text>
-              <Text style={styles.noSupportTitle}>No Support Person Set</Text>
-              <Text style={styles.noSupportText}>
-                Would you like to add a support person you can reach out to in case of emergency?
-              </Text>
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleAddSupportPerson}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.addButtonText}>Add Support Person</Text>
-              </TouchableOpacity>
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: Math.max(20, insets.bottom + 20) }
+            ]}
+            showsVerticalScrollIndicator={false}
+            bounces={true}
+            alwaysBounceVertical={true}
+          >
+            <View style={styles.content}>
+              <Text style={styles.title}>Support Person</Text>
+              <View style={styles.noSupportCard}>
+                <Text style={styles.noSupportIcon}>❤️</Text>
+                <Text style={styles.noSupportTitle}>No Support Person Set</Text>
+                <Text style={styles.noSupportText}>
+                  Would you like to add a support person you can reach out to in case of emergency?
+                </Text>
+                <TouchableOpacity
+                  style={styles.addButton}
+                  onPress={handleAddSupportPerson}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.addButtonText}>Add Support Person</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
+          </ScrollView>
         </View>
 
         {/* Add Support Person Modal */}
@@ -214,37 +226,51 @@ export default function SupportScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={[styles.statusBarBackground, { height: insets.top }]} />
       <View style={styles.container}>
-        <View style={styles.content}>
-          <Text style={styles.title}>Support Person</Text>
-          
-          <View style={styles.supportCard}>
-            <View style={styles.supportHeader}>
-              <Text style={styles.supportName}>{supportPerson.name}</Text>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: Math.max(20, insets.bottom + 20) }
+          ]}
+          showsVerticalScrollIndicator={false}
+          bounces={true}
+          alwaysBounceVertical={true}
+        >
+          <View style={styles.content}>
+            <Text style={styles.title}>Support Person</Text>
+            
+            <View style={styles.supportCard}>
+              <View style={styles.supportHeader}>
+                <Text style={styles.supportName}>{supportPerson.name}</Text>
+              </View>
+              
+              <Text style={styles.supportPhone}>{supportPerson.phone}</Text>
+              
+              <Text style={styles.supportMessage}>
+                Reach out when you need support. You're not alone in this journey.
+              </Text>
+              
+              <TouchableOpacity
+                style={styles.callButton}
+                onPress={handleCallSupport}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.callButtonIcon}>📞</Text>
+                <Text style={styles.callButtonText}>Call {supportPerson.name}</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.reminderCard}>
+              <Text style={styles.reminderTitle}>❤️ You Matter</Text>
+              <Text style={styles.reminderText}>
+                It's okay to ask for help. Your support person is here because they care about you.
+              </Text>
             </View>
             
-            <Text style={styles.supportPhone}>{supportPerson.phone}</Text>
-            
-            <Text style={styles.supportMessage}>
-              Reach out when you need support. You're not alone in this journey.
-            </Text>
-            
-            <TouchableOpacity
-              style={styles.callButton}
-              onPress={handleCallSupport}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.callButtonIcon}>📞</Text>
-              <Text style={styles.callButtonText}>Call {supportPerson.name}</Text>
-            </TouchableOpacity>
+            {/* Bottom spacer to ensure content isn't hidden behind navigation */}
+            <View style={{ height: 20 }} />
           </View>
-
-          <View style={styles.reminderCard}>
-            <Text style={styles.reminderTitle}>❤️ You Matter</Text>
-            <Text style={styles.reminderText}>
-              It's okay to ask for help. Your support person is here because they care about you.
-            </Text>
-          </View>
-        </View>
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -262,22 +288,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    minHeight: '100%',
+  },
   content: {
     flex: 1,
-    padding: 20,
-    justifyContent: 'center',
+    padding: 16, // Reduced from 20
+    paddingTop: 16, // Reduced from 20
   },
   title: {
-    ...Fonts.largeTitle,
+    ...Fonts.headline, // Changed from largeTitle to headline for smaller size
     color: Colors.text,
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 20, // Reduced from 25
   },
   supportCard: {
     backgroundColor: Colors.surface,
     borderRadius: 20,
-    padding: 30,
-    marginBottom: 30,
+    padding: 20, // Reduced from 24
+    marginBottom: 16, // Reduced from 20
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -295,14 +328,14 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   supportName: {
-    ...Fonts.largeTitle,
+    ...Fonts.title, // Changed from largeTitle to title for smaller size
     color: Colors.text,
     fontWeight: '700',
   },
   supportPhone: {
-    ...Fonts.title,
+    ...Fonts.body, // Changed from title to body for smaller size
     color: Colors.primary,
-    marginBottom: 20,
+    marginBottom: 16, // Reduced from 20
     fontWeight: '600',
   },
   supportMessage: {
@@ -310,13 +343,13 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
-    marginBottom: 30,
+    marginBottom: 20, // Reduced from 30
   },
   callButton: {
     backgroundColor: Colors.primary,
     borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
+    paddingVertical: 14, // Reduced from 16
+    paddingHorizontal: 24, // Reduced from 32
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: Colors.primary,
@@ -337,8 +370,9 @@ const styles = StyleSheet.create({
   reminderCard: {
     backgroundColor: '#E8F4FD',
     borderRadius: 16,
-    padding: 24,
+    padding: 18, // Reduced from 20
     alignItems: 'center',
+    marginBottom: 16, // Added bottom margin for better spacing
   },
   reminderTitle: {
     ...Fonts.headline,
@@ -355,7 +389,7 @@ const styles = StyleSheet.create({
   noSupportCard: {
     backgroundColor: Colors.surface,
     borderRadius: 20,
-    padding: 40,
+    padding: 24, // Reduced from 28
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -365,12 +399,12 @@ const styles = StyleSheet.create({
   },
   noSupportIcon: {
     fontSize: 48,
-    marginBottom: 20,
+    marginBottom: 12, // Reduced from 16
   },
   noSupportTitle: {
     ...Fonts.headline,
     color: Colors.text,
-    marginBottom: 16,
+    marginBottom: 10, // Reduced from 12
     textAlign: 'center',
   },
   noSupportText: {
@@ -382,9 +416,9 @@ const styles = StyleSheet.create({
   addButton: {
     backgroundColor: Colors.primary,
     borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    marginTop: 24,
+    paddingVertical: 14, // Reduced from 16
+    paddingHorizontal: 24, // Reduced from 32
+    marginTop: 20, // Reduced from 24
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

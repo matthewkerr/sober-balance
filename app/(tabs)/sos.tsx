@@ -6,8 +6,10 @@ import {
   Animated,
   Dimensions,
   SafeAreaView,
+  ScrollView,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 const { width, height } = Dimensions.get('window');
@@ -60,7 +62,8 @@ export default function SOSScreen() {
   const fadeAnimation = useRef(new Animated.Value(1)).current;
   const scaleAnimation = useRef(new Animated.Value(1)).current;
 
-  const navigation = useNavigation(); // ADD THIS LINE
+  const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   
   // Refs to track timeouts and prevent memory leaks
   const timeoutRefs = useRef<number[]>([]);
@@ -263,6 +266,7 @@ export default function SOSScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={[styles.statusBarBackground, { height: insets.top }]} />
       <Animated.View
         style={[
           styles.activeContainer,
@@ -272,37 +276,60 @@ export default function SOSScreen() {
           },
         ]}
       >
-        <View style={styles.content}>
-          <View style={styles.breathingSection}>
-            <Animated.View
-              style={[
-                styles.breathingCircle,
-                {
-                  transform: [{ scale: breathAnimation }],
-                },
-              ]}
-            >
-              <Text style={styles.breathEmoji}>{getBreathEmoji()}</Text>
-            </Animated.View>
-            <Text style={styles.breathInstruction}>{getBreathInstruction()}</Text>
-            <Text style={styles.breathCount}>Breath {breathCount + 1}</Text>
-          </View>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { 
+              paddingBottom: Math.max(40, insets.bottom + 20), // Ensure enough bottom padding for iOS navigation
+              minHeight: '100%' // Ensure content takes full height
+            }
+          ]}
+          showsVerticalScrollIndicator={false}
+          bounces={true}
+          alwaysBounceVertical={true}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={[
+            styles.content,
+            { 
+              paddingBottom: Math.max(40, insets.bottom + 20) // Ensure enough bottom padding
+            }
+          ]}>
+            <View style={styles.breathingSection}>
+              <Animated.View
+                style={[
+                  styles.breathingCircle,
+                  {
+                    transform: [{ scale: breathAnimation }],
+                  },
+                ]}
+              >
+                <Text style={styles.breathEmoji}>{getBreathEmoji()}</Text>
+              </Animated.View>
+              <Text style={styles.breathInstruction}>{getBreathInstruction()}</Text>
+              <Text style={styles.breathCount}>Breath {breathCount + 1}</Text>
+            </View>
 
-          <View style={styles.remindersSection}>
-            <Text style={styles.reminderText}>You are safe. This moment will pass.</Text>
-            <Text style={styles.reminderText}>You have the strength to get through this.</Text>
-          </View>
+            <View style={styles.remindersSection}>
+              <Text style={styles.reminderText}>You are safe. This moment will pass.</Text>
+              <Text style={styles.reminderText}>You have the strength to get through this.</Text>
+            </View>
 
-          <View style={styles.messageSection}>
-            <Text style={styles.messageText}>{currentMessage}</Text>
-          </View>
+            <View style={styles.messageSection}>
+              <Text style={styles.messageText}>{currentMessage}</Text>
+            </View>
 
-         
-          <View style={styles.remindersSection}>
-            <Text style={styles.reminderText}> The 4-7-8 breathing technique is a simple, powerful relaxation practice rooted in breath regulation. </Text>
-            <Text style={styles.reminderText}>It’s often used to reduce anxiety, manage stress, and help with falling asleep.</Text>
+            {/* <View style={styles.remindersSection}>
+              <Text style={styles.reminderText}> The 4-7-8 breathing technique is a simple, powerful relaxation practice rooted in breath regulation. </Text>
+              <Text style={styles.reminderText}>It's often used to reduce anxiety, manage stress, and help with falling asleep.</Text>
+            </View> */}
+            
+            {/* Bottom spacer to ensure content isn't hidden behind navigation */}
+            <View style={{ height: 20 }} />
           </View>
-        </View>
+        </ScrollView>
       </Animated.View>
     </SafeAreaView>
   );
@@ -311,21 +338,33 @@ export default function SOSScreen() {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: Colors.background 
+    backgroundColor: Colors.background,
   },
-    activeContainer: { 
+  activeContainer: { 
     flex: 1, 
-    backgroundColor: '#5B8A72' // Same green as sobriety card
+    backgroundColor: '#5B8A72', // Same green as sobriety card
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    minHeight: '100%',
+  },
+  statusBarBackground: {
+    backgroundColor: Colors.background,
   },
   content: { 
     flex: 1, 
-    justifyContent: 'center', 
     alignItems: 'center', 
-    padding: 20 
+    padding: 16, // Reduced from 20
+    paddingTop: 25, // Reduced from 40
+    // paddingBottom will be set dynamically based on safe area
   },
   breathingSection: { 
     alignItems: 'center', 
-    marginBottom: 60 
+    marginBottom: 25, // Reduced from 40
+    marginTop: 15, // Reduced from 20
   },
   breathingCircle: {
     width: 150, 
@@ -334,7 +373,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center', 
     alignItems: 'center', 
-    marginBottom: 20,
+    marginBottom: 15, // Reduced from 20
   },
   breathEmoji: { 
     fontSize: 48 
@@ -343,8 +382,8 @@ const styles = StyleSheet.create({
     ...Fonts.title,
     color: Colors.surface,
     textAlign: 'center',
-    marginBottom: 8,
-    marginTop: 40,
+    marginBottom: 6, // Reduced from 8
+    marginTop: 25, // Reduced from 40
   },
   breathCount: {
     ...Fonts.body,
@@ -354,9 +393,10 @@ const styles = StyleSheet.create({
   messageSection: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 16,
-    padding: 24,
-    marginBottom: 40,
+    padding: 20, // Reduced from 24
+    marginBottom: 20, // Reduced from 30
     maxWidth: 350,
+    width: '100%',
   },
   messageText: {
     ...Fonts.title,
@@ -366,13 +406,14 @@ const styles = StyleSheet.create({
   },
   remindersSection: { 
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 18, // Reduced from 25
+    width: '100%',
   },
   reminderText: {
     ...Fonts.body,
     color: Colors.surface,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 6, // Reduced from 8
     opacity: 0.9,
   },
 });

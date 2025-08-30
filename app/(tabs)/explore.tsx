@@ -1,12 +1,22 @@
 
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
+  ScrollView,
+  Alert,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { storage } from '../../utils/storage';
 import { database } from '../../utils/database';
 import { Colors } from '../../constants/Colors';
 import { Fonts } from '../../constants/Fonts';
 import { LargeButton } from '../../components/LargeButton';
+import { calculateSobrietyDaysByDate } from '../../utils/database';
 
 export default function DebugScreen() {
   const router = useRouter();
@@ -68,10 +78,8 @@ export default function DebugScreen() {
       
       // Calculate sobriety days if tracking
       if (sobriety && sobriety.tracking_sobriety && sobriety.sober_date) {
-        const soberDate = new Date(sobriety.sober_date);
-        const now = new Date();
-        const timeDiff = now.getTime() - soberDate.getTime();
-        const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+        // Calculate days since sober date using calendar days
+        const daysDiff = calculateSobrietyDaysByDate(sobriety.sober_date);
         setSobrietyDays(daysDiff);
       } else {
         setSobrietyDays(null);

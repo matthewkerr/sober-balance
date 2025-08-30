@@ -1,24 +1,34 @@
 
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  SafeAreaView,
+} from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { database } from '../../utils/database';
 import { storage } from '../../utils/storage';
-import { database, Encouragement, Intention, DailyCheckIn } from '../../utils/database';
 import { Colors } from '../../constants/Colors';
 import { Fonts } from '../../constants/Fonts';
+import { calculateSobrietyDaysByDate } from '../../utils/database';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [userName, setUserName] = useState<string | null>(null);
-  const [encouragement, setEncouragement] = useState<Encouragement | null>(null);
+  const [encouragement, setEncouragement] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [sobrietyDays, setSobrietyDays] = useState<number | null>(null);
   const [isTrackingSobriety, setIsTrackingSobriety] = useState(false);
+  const [sobrietyDays, setSobrietyDays] = useState<number | null>(null);
+  const [sobrietyData, setSobrietyData] = useState<any>(null);
   const [isEncouragementLiked, setIsEncouragementLiked] = useState(false);
-  const [currentIntention, setCurrentIntention] = useState<Intention | null>(null);
-  const [todayCheckIn, setTodayCheckIn] = useState<DailyCheckIn | null>(null);
+  const [currentIntention, setCurrentIntention] = useState<any | null>(null);
+  const [todayCheckIn, setTodayCheckIn] = useState<any | null>(null);
   const [showSobrietyCounter, setShowSobrietyCounter] = useState(true);
 
   useFocusEffect(
@@ -75,22 +85,22 @@ export default function HomeScreen() {
       if (sobrietyData && sobrietyData.tracking_sobriety && sobrietyData.sober_date) {
         setIsTrackingSobriety(true);
         
-        // Calculate days since sober date
-        const soberDate = new Date(sobrietyData.sober_date);
-        const now = new Date();
-        const timeDiff = now.getTime() - soberDate.getTime();
-        const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+        // Calculate days since sober date using calendar days
+        const daysDiff = calculateSobrietyDaysByDate(sobrietyData.sober_date);
         
         setSobrietyDays(daysDiff);
-        // console.log('Sobriety days calculated:', daysDiff);
+        setSobrietyData(sobrietyData); // Store sobrietyData for conditional messaging
+        // console.log('Sobriety days calculated (calendar):', daysDiff);
       } else {
         setIsTrackingSobriety(false);
         setSobrietyDays(null);
+        setSobrietyData(null); // Clear sobrietyData if not tracking
       }
     } catch (error) {
       // console.error('Error loading sobriety data:', error);
       setIsTrackingSobriety(false);
       setSobrietyDays(null);
+      setSobrietyData(null);
     }
   };
 
@@ -158,9 +168,15 @@ export default function HomeScreen() {
       <ScrollView 
         style={styles.container}
         showsVerticalScrollIndicator={false}
+        bounces={true}
+        alwaysBounceVertical={false}
+        scrollEventThrottle={16}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: 20 }
+          { 
+            paddingTop: 20,
+            paddingBottom: 120 + insets.bottom // Account for tab bar height + safe area
+          }
         ]}
       >
       <Text style={styles.greeting}>
@@ -201,7 +217,10 @@ export default function HomeScreen() {
             {formatSobrietyTime(sobrietyDays)}
           </Text>
           <Text style={styles.sobrietySubtext}>
-            Every day is a victory worth celebrating
+            {sobrietyData?.tracking_mode === 'trying' 
+              ? 'Every effort is a step forward worth celebrating'
+              : 'Every day is a victory worth celebrating'
+            }
           </Text>
         </View>
       )}
@@ -276,7 +295,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 40, // Extra padding at bottom for better scrolling
+    paddingBottom: 120, // Increased padding to account for tab bar height + safe area
   },
   greeting: {
     ...Fonts.largeTitle,
@@ -439,6 +458,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 24,
     marginTop: 20,
+    marginBottom: 20, // Add bottom margin to ensure proper spacing
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
