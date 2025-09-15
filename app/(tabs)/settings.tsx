@@ -47,6 +47,7 @@ export default function SettingsScreen() {
   const [soberYears, setSoberYears] = useState('');
   const [soberMonths, setSoberMonths] = useState('');
   const [soberDays, setSoberDays] = useState('');
+  const [backupStatus, setBackupStatus] = useState<{ exists: boolean; timestamp?: string; age?: number; size?: number }>({ exists: false });
 
   useEffect(() => {
     loadDataStats();
@@ -54,6 +55,7 @@ export default function SettingsScreen() {
     loadSobrietyCounterSetting();
     loadUserName();
     loadSobrietyData();
+    loadBackupStatus();
   }, []);
 
   const loadDataStats = async () => {
@@ -120,6 +122,15 @@ export default function SettingsScreen() {
       setUserName(name || '');
     } catch (error) {
       // console.error('Error loading user name:', error);
+    }
+  };
+
+  const loadBackupStatus = async () => {
+    try {
+      const status = await database.getBackupStatus();
+      setBackupStatus(status);
+    } catch (error) {
+      // console.error('Error loading backup status:', error);
     }
   };
 
@@ -365,25 +376,56 @@ export default function SettingsScreen() {
     try {
       setIsLoading(true);
       await database.manualBackup();
-      Alert.alert('Success', 'Data backed up successfully');
+      await loadBackupStatus(); // Refresh backup status
+      Alert.alert(
+        'Backup Successful', 
+        'Your data has been backed up successfully. This backup will help protect your data during app updates.',
+        [{ text: 'OK', style: 'default' }]
+      );
     } catch (error) {
-      Alert.alert('Error', 'Failed to backup data. Please try again.');
+      Alert.alert(
+        'Backup Failed', 
+        'Failed to backup your data. Please check your device storage and try again.',
+        [{ text: 'OK', style: 'default' }]
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleRestoreData = async () => {
-    try {
-      setIsLoading(true);
-      await database.manualRestore();
-      await loadDataStats(); // Reload the data stats
-      Alert.alert('Success', 'Data restored successfully');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to restore data. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    Alert.alert(
+      'Restore Data',
+      'This will restore your data from the last backup. Any data added since the backup will be lost. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Restore',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsLoading(true);
+              await database.manualRestore();
+              await loadDataStats(); // Reload the data stats
+              await loadBackupStatus(); // Refresh backup status
+              Alert.alert(
+                'Restore Successful', 
+                'Your data has been restored from backup successfully.',
+                [{ text: 'OK', style: 'default' }]
+              );
+            } catch (error) {
+              Alert.alert(
+                'Restore Failed', 
+                'Failed to restore your data. Please make sure you have a backup available.',
+                [{ text: 'OK', style: 'default' }]
+              );
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleExportData = async () => {
@@ -519,16 +561,21 @@ export default function SettingsScreen() {
     }
   };
 
-  const SettingItem = ({ title, subtitle, onPress, destructive = false }: {
+  const SettingItem = ({ title, subtitle, onPress, destructive = false, disabled = false }: {
     title: string;
     subtitle?: string;
     onPress: () => void;
     destructive?: boolean;
+    disabled?: boolean;
   }) => (
     <TouchableOpacity
-      style={[styles.settingItem, destructive && styles.destructiveItem]}
+      style={[
+        styles.settingItem, 
+        destructive && styles.destructiveItem,
+        (disabled || isLoading) && styles.disabledItem
+      ]}
       onPress={onPress}
-      disabled={isLoading}
+      disabled={disabled || isLoading}
       activeOpacity={0.7}
     >
       <View style={styles.settingContent}>
@@ -671,14 +718,21 @@ export default function SettingsScreen() {
           
           <SettingItem
             title="Backup Data"
-            subtitle="Create a backup of all your data"
+            subtitle={backupStatus.exists 
+              ? `Last backup: ${backupStatus.age ? `${backupStatus.age} days ago` : 'Unknown'} (${backupStatus.size || 0}KB)`
+              : "Create a backup of all your data"
+            }
             onPress={handleBackupData}
           />
           
           <SettingItem
             title="Restore Data"
-            subtitle="Restore data from backup if needed"
+            subtitle={backupStatus.exists 
+              ? "Restore data from backup if needed"
+              : "No backup available"
+            }
             onPress={handleRestoreData}
+            disabled={!backupStatus.exists}
           />
           
           <SettingItem
@@ -1043,6 +1097,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF2F2',
     borderWidth: 1,
     borderColor: '#FECACA',
+  },
+  disabledItem: {
+    opacity: 0.5,
+    backgroundColor: '#F5F5F5',
   },
   settingContent: {
     flex: 1,

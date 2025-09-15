@@ -99,6 +99,23 @@ export interface DailyCheckIn {
 class DatabaseService {
   private db: SQLite.SQLiteDatabase | null = null;
 
+  // Retry mechanism for failed operations
+  private async retryOperation<T>(operation: () => Promise<T>, maxRetries: number = 3, delayMs: number = 1000): Promise<T> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        if (attempt === maxRetries) {
+          console.error(`Operation failed after ${maxRetries} attempts:`, error);
+          throw error;
+        }
+        console.warn(`Operation failed (attempt ${attempt}/${maxRetries}), retrying in ${delayMs}ms...`, error);
+        await new Promise(resolve => setTimeout(resolve, delayMs * attempt));
+      }
+    }
+    throw new Error('Retry mechanism failed unexpectedly');
+  }
+
   async init(): Promise<void> {
     try {
       // Close existing database connection if any
@@ -1303,6 +1320,7 @@ class DatabaseService {
       // Create backup object
       const backup = {
         timestamp: new Date().toISOString(),
+        version: '1.0.0', // Track backup format version
         user,
         supportPerson,
         sobrietyData,
@@ -1313,11 +1331,25 @@ class DatabaseService {
         sosLogs
       };
 
-      // Save to AsyncStorage
-      await AsyncStorage.setItem('sober_balance_backup', JSON.stringify(backup));
-      // console.log('Data backed up successfully');
+      // Validate backup size before saving
+      const backupString = JSON.stringify(backup);
+      const backupSize = backupString.length;
+      const maxSize = 5 * 1024 * 1024; // 5MB limit
+
+      if (backupSize > maxSize) {
+        console.warn(`Backup size (${Math.round(backupSize / 1024)}KB) exceeds recommended limit (${Math.round(maxSize / 1024)}KB)`);
+        // Still save the backup but log the warning
+      }
+
+      // Save to AsyncStorage with retry mechanism
+      await this.retryOperation(async () => {
+        await AsyncStorage.setItem('sober_balance_backup', backupString);
+      }, 3, 500);
+      
+      console.log(`Data backed up successfully (${Math.round(backupSize / 1024)}KB, ${new Date().toISOString()})`);
     } catch (error) {
-      // console.error('Error backing up data:', error);
+      console.error('Error backing up data:', error);
+      throw error; // Re-throw to allow calling code to handle the error
     }
   }
 
@@ -1339,25 +1371,55 @@ class DatabaseService {
         'SELECT COUNT(*) as count FROM users'
       );
       
-      const journalCount = await this.db!.getFirstAsync<{ count: number }>(
-        'SELECT COUNT(*) as count FROM journal_entries'
-      );
+      // Check for any user-generated content
+      const [journalCount, intentionCount, checkInCount, supportCount, sobrietyCount] = await Promise.all([
+        this.db!.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM journal_entries'),
+        this.db!.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM intentions'),
+        this.db!.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM daily_check_ins'),
+        this.db!.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM support_persons'),
+        this.db!.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM sobriety_data')
+      ]);
 
-      // If database has data, no need to restore
-      if (userCount && userCount.count > 0 && journalCount && journalCount.count > 0) {
-        // console.log('Database has data, no restore needed');
+      // If database has user AND any content, no need to restore
+      const hasUserData = userCount && userCount.count > 0;
+      const hasAnyContent = (journalCount && journalCount.count > 0) ||
+                           (intentionCount && intentionCount.count > 0) ||
+                           (checkInCount && checkInCount.count > 0) ||
+                           (supportCount && supportCount.count > 0) ||
+                           (sobrietyCount && sobrietyCount.count > 0);
+
+      if (hasUserData && hasAnyContent) {
+        // console.log('Database has user data and content, no restore needed');
         return;
       }
 
-      // Try to restore from backup
-      const backupData = await AsyncStorage.getItem('sober_balance_backup');
+      // Try to restore from backup with retry mechanism
+      const backupData = await this.retryOperation(async () => {
+        return await AsyncStorage.getItem('sober_balance_backup');
+      }, 3, 500);
       if (!backupData) {
-        // console.log('No backup data found');
+        console.log('No backup data found - starting with fresh data');
         return;
       }
 
       const backup = JSON.parse(backupData);
-      // console.log('Restoring data from backup...');
+      
+      // Check backup age and warn if it's old
+      if (backup.timestamp) {
+        const backupAge = Date.now() - new Date(backup.timestamp).getTime();
+        const thirtyDays = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+        
+        if (backupAge > thirtyDays) {
+          console.warn(`Backup is ${Math.round(backupAge / (24 * 60 * 60 * 1000))} days old - consider creating a fresh backup`);
+        }
+      }
+
+      // Validate backup version compatibility
+      if (backup.version && backup.version !== '1.0.0') {
+        console.warn(`Backup version ${backup.version} may not be compatible with current version 1.0.0`);
+      }
+
+      console.log(`Restoring data from backup (${backup.timestamp || 'unknown date'})...`);
 
       // Restore data in the correct order (respecting foreign key constraints)
       if (backup.user) {
@@ -1453,6 +1515,31 @@ class DatabaseService {
     } catch (error) {
       // console.error('Manual restore failed:', error);
       throw error;
+    }
+  }
+
+  // Get backup status information
+  async getBackupStatus(): Promise<{ exists: boolean; timestamp?: string; age?: number; size?: number }> {
+    try {
+      const backupData = await AsyncStorage.getItem('sober_balance_backup');
+      if (!backupData) {
+        return { exists: false };
+      }
+
+      const backup = JSON.parse(backupData);
+      const backupSize = backupData.length;
+      const timestamp = backup.timestamp;
+      const age = timestamp ? Math.round((Date.now() - new Date(timestamp).getTime()) / (24 * 60 * 60 * 1000)) : undefined;
+
+      return {
+        exists: true,
+        timestamp,
+        age,
+        size: Math.round(backupSize / 1024) // Size in KB
+      };
+    } catch (error) {
+      console.error('Error getting backup status:', error);
+      return { exists: false };
     }
   }
 }
