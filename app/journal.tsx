@@ -21,6 +21,8 @@ import { Fonts } from '../constants/Fonts';
 export default function JournalScreen() {
   const insets = useSafeAreaInsets();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [filteredEntries, setFilteredEntries] = useState<JournalEntry[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isWriting, setIsWriting] = useState(false);
   const [newEntry, setNewEntry] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -37,10 +39,24 @@ export default function JournalScreen() {
     try {
       const journalEntries = await database.getJournalEntries();
       setEntries(journalEntries);
+      setFilteredEntries(journalEntries);
       // console.log('Loaded journal entries:', journalEntries.length);
     } catch (error) {
       // console.error('Error loading journal entries:', error);
     }
+  };
+
+  const filterEntries = (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setFilteredEntries(entries);
+      return;
+    }
+    
+    const filtered = entries.filter(entry => 
+      entry.content.toLowerCase().includes(query.toLowerCase())
+    );
+    setFilteredEntries(filtered);
   };
 
   const handleSaveEntry = async () => {
@@ -205,12 +221,25 @@ export default function JournalScreen() {
         </View>
 
       {!isWriting && (
-        <TouchableOpacity 
-          style={styles.newEntryButton}
-          onPress={() => setIsWriting(true)}
-        >
-          <Text style={styles.newEntryText}>✏️ Write New Entry</Text>
-        </TouchableOpacity>
+        <>
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              value={searchQuery}
+              onChangeText={filterEntries}
+              placeholder="Search your journal entries..."
+              placeholderTextColor={Colors.textLight}
+              returnKeyType="search"
+            />
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.newEntryButton}
+            onPress={() => setIsWriting(true)}
+          >
+            <Text style={styles.newEntryText}>✏️ Write New Entry</Text>
+          </TouchableOpacity>
+        </>
       )}
 
       {isWriting && (
@@ -249,18 +278,23 @@ export default function JournalScreen() {
 
       <ScrollView style={styles.entriesContainer} showsVerticalScrollIndicator={false}>
         <Text style={styles.entriesTitle}>
-          Past Entries ({entries.length})
+          {searchQuery ? `Search Results (${filteredEntries.length})` : `Past Entries (${entries.length})`}
         </Text>
         
-        {entries.length === 0 ? (
+        {filteredEntries.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No entries yet</Text>
+            <Text style={styles.emptyTitle}>
+              {searchQuery ? 'No entries found' : 'No entries yet'}
+            </Text>
             <Text style={styles.emptySubtext}>
-              Start writing to see your reflections here
+              {searchQuery 
+                ? 'Try a different search term' 
+                : 'Start writing to see your reflections here'
+              }
             </Text>
           </View>
         ) : (
-          entries.map((entry) => (
+          filteredEntries.map((entry) => (
             <View key={entry.id} style={styles.entryCard}>
               {editingEntry?.id === entry.id ? (
                 // Edit mode
@@ -371,6 +405,19 @@ const styles = StyleSheet.create({
   newEntryText: {
     ...Fonts.title,
     color: Colors.surface,
+  },
+  searchContainer: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+  },
+  searchInput: {
+    ...Fonts.body,
+    color: Colors.text,
+    padding: 16,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   writingContainer: {
     backgroundColor: Colors.surface,

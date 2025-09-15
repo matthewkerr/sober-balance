@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LargeButton } from '../../components/LargeButton';
+import { OnboardingHeader } from '../../components/OnboardingHeader';
 import { storage } from '../../utils/storage';
 import { database } from '../../utils/database';
 import { Colors } from '../../constants/Colors';
@@ -39,6 +40,12 @@ export default function CompleteStep() {
     <SafeAreaView style={styles.safeArea}>
       <View style={[styles.statusBarBackground, { height: insets.top }]} />
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: Math.max(20, insets.top + 10) }]}>
+        <OnboardingHeader 
+          currentStep={5} 
+          totalSteps={5} 
+          canGoBack={false}
+        />
+        
         <View style={styles.finalHeader}>
           <Text style={styles.finalIcon}>✨</Text>
           <Text style={styles.finalTitle}>You're ready.</Text>

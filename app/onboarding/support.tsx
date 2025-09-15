@@ -13,6 +13,8 @@ import { useRouter } from 'expo-router';
 import { LargeButton } from '../../components/LargeButton';
 import { LargeTextInput } from '../../components/LargeTextInput';
 import { SelectableOption } from '../../components/SelectableOption';
+import { OnboardingHeader } from '../../components/OnboardingHeader';
+import { OnboardingSkipButton } from '../../components/OnboardingSkipButton';
 import { storage } from '../../utils/storage';
 import { database } from '../../utils/database';
 import { Colors } from '../../constants/Colors';
@@ -91,6 +93,15 @@ export default function SupportStep() {
     router.back();
   };
 
+  const handleSkip = async () => {
+    try {
+      await storage.setHasCompletedOnboarding(true);
+      router.replace('/(tabs)');
+    } catch (error) {
+      // Handle error silently
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={[styles.statusBarBackground, { height: insets.top }]} />
@@ -99,6 +110,13 @@ export default function SupportStep() {
         style={styles.container}
       >
         <ScrollView contentContainerStyle={[styles.content, { paddingTop: Math.max(20, insets.top + 10) }]}>
+          <OnboardingHeader 
+            currentStep={3} 
+            totalSteps={5} 
+            canGoBack={true}
+            onBack={handleBack}
+          />
+          
           <View style={styles.header}>
             <Text style={styles.title}>Support Person</Text>
             <Text style={styles.subtitle}>
@@ -173,12 +191,7 @@ export default function SupportStep() {
               style={styles.continueButton}
             />
             
-            <LargeButton
-              title="Back"
-              onPress={handleBack}
-              variant="secondary"
-              style={styles.backButton}
-            />
+            <OnboardingSkipButton onSkip={handleSkip} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

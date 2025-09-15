@@ -30,16 +30,20 @@ export default function HomeScreen() {
   const [currentIntention, setCurrentIntention] = useState<any | null>(null);
   const [todayCheckIn, setTodayCheckIn] = useState<any | null>(null);
   const [showSobrietyCounter, setShowSobrietyCounter] = useState(true);
+  const [hasLoadedEncouragement, setHasLoadedEncouragement] = useState(false);
 
   useFocusEffect(
     React.useCallback(() => {
       loadUserName();
-      loadEncouragement();
+      // Only load encouragement on first focus (when app opens)
+      if (!hasLoadedEncouragement) {
+        loadEncouragement();
+      }
       loadSobrietyData();
       loadCurrentIntention();
       loadTodayCheckIn();
       loadSobrietyCounterSetting();
-    }, [])
+    }, [hasLoadedEncouragement])
   );
 
   const loadUserName = async () => {
@@ -59,6 +63,8 @@ export default function HomeScreen() {
       setEncouragement(randomEncouragement);
       // Set liked state based on whether it's been seen
       setIsEncouragementLiked(randomEncouragement?.seen || false);
+      // Mark that we've loaded the encouragement for this session
+      setHasLoadedEncouragement(true);
       // console.log('Loaded encouragement:', randomEncouragement);
     } catch (error) {
       // console.error('Error loading encouragement:', error);

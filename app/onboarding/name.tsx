@@ -12,6 +12,8 @@ import {
 import { useRouter } from 'expo-router';
 import { LargeButton } from '../../components/LargeButton';
 import { LargeTextInput } from '../../components/LargeTextInput';
+import { OnboardingHeader } from '../../components/OnboardingHeader';
+import { OnboardingSkipButton } from '../../components/OnboardingSkipButton';
 import { storage } from '../../utils/storage';
 import { database } from '../../utils/database';
 import { Colors } from '../../constants/Colors';
@@ -63,26 +65,13 @@ export default function NameStep() {
     }
   };
 
-  const handleSkip = () => {
-    Alert.alert(
-      'Skip Setup?',
-      'You can always complete this later in settings. Continue without finishing setup?',
-      [
-        { text: 'Go Back', style: 'cancel' },
-        {
-          text: 'Skip',
-          style: 'default',
-          onPress: async () => {
-            try {
-              await storage.setHasCompletedOnboarding(true);
-              router.replace('/(tabs)');
-            } catch (error) {
-              // Handle error silently
-            }
-          }
-        }
-      ]
-    );
+  const handleSkip = async () => {
+    try {
+      await storage.setHasCompletedOnboarding(true);
+      router.replace('/(tabs)');
+    } catch (error) {
+      // Handle error silently
+    }
   };
 
   return (
@@ -93,6 +82,12 @@ export default function NameStep() {
         style={styles.container}
       >
         <ScrollView contentContainerStyle={[styles.content, { paddingTop: Math.max(20, insets.top + 10) }]}>
+          <OnboardingHeader 
+            currentStep={1} 
+            totalSteps={5} 
+            canGoBack={false}
+          />
+          
           <View style={styles.header}>
             <Text style={styles.title}>Welcome to{'\n'}SoberBalance</Text>
             <Text style={styles.subtitle}>
@@ -127,12 +122,7 @@ export default function NameStep() {
               style={styles.continueButton}
             />
             
-            <LargeButton
-              title="Skip for now"
-              onPress={handleSkip}
-              variant="secondary"
-              style={styles.skipButton}
-            />
+            <OnboardingSkipButton onSkip={handleSkip} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

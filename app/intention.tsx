@@ -21,6 +21,8 @@ import { Fonts } from '../constants/Fonts';
 export default function IntentionScreen() {
   const insets = useSafeAreaInsets();
   const [intentions, setIntentions] = useState<Intention[]>([]);
+  const [filteredIntentions, setFilteredIntentions] = useState<Intention[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isSetting, setIsSetting] = useState(false);
   const [newIntention, setNewIntention] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -37,10 +39,24 @@ export default function IntentionScreen() {
     try {
       const intentionList = await database.getIntentions();
       setIntentions(intentionList);
+      setFilteredIntentions(intentionList);
       // console.log('Loaded intentions:', intentionList.length);
     } catch (error) {
       // console.error('Error loading intentions:', error);
     }
+  };
+
+  const filterIntentions = (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setFilteredIntentions(intentions);
+      return;
+    }
+    
+    const filtered = intentions.filter(intention => 
+      intention.content.toLowerCase().includes(query.toLowerCase())
+    );
+    setFilteredIntentions(filtered);
   };
 
   const handleSaveIntention = async () => {
@@ -205,12 +221,25 @@ export default function IntentionScreen() {
         </View>
 
         {!isSetting && (
-          <TouchableOpacity 
-            style={styles.newIntentionButton}
-            onPress={() => setIsSetting(true)}
-          >
-            <Text style={styles.newIntentionText}>Set Current Intention</Text>
-          </TouchableOpacity>
+          <>
+            <View style={styles.searchContainer}>
+              <TextInput
+                style={styles.searchInput}
+                value={searchQuery}
+                onChangeText={filterIntentions}
+                placeholder="Search your intentions..."
+                placeholderTextColor={Colors.textLight}
+                returnKeyType="search"
+              />
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.newIntentionButton}
+              onPress={() => setIsSetting(true)}
+            >
+              <Text style={styles.newIntentionText}>Set Current Intention</Text>
+            </TouchableOpacity>
+          </>
         )}
 
         {isSetting && (
@@ -249,18 +278,23 @@ export default function IntentionScreen() {
 
         <ScrollView style={styles.intentionsContainer} showsVerticalScrollIndicator={false}>
           <Text style={styles.intentionsTitle}>
-            Past Intentions ({intentions.length})
+            {searchQuery ? `Search Results (${filteredIntentions.length})` : `Past Intentions (${intentions.length})`}
           </Text>
           
-          {intentions.length === 0 ? (
+          {filteredIntentions.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>No intentions yet</Text>
+              <Text style={styles.emptyTitle}>
+                {searchQuery ? 'No intentions found' : 'No intentions yet'}
+              </Text>
               <Text style={styles.emptySubtext}>
-                Set your first intention to see it here
+                {searchQuery 
+                  ? 'Try a different search term' 
+                  : 'Set your first intention to see it here'
+                }
               </Text>
             </View>
           ) : (
-            intentions.map((intention) => (
+            filteredIntentions.map((intention) => (
               <View key={intention.id} style={styles.intentionCard}>
                 {editingIntention?.id === intention.id ? (
                   // Edit mode
@@ -371,6 +405,19 @@ const styles = StyleSheet.create({
   newIntentionText: {
     ...Fonts.title,
     color: Colors.surface,
+  },
+  searchContainer: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+  },
+  searchInput: {
+    ...Fonts.body,
+    color: Colors.text,
+    padding: 16,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   settingContainer: {
     backgroundColor: Colors.surface,
