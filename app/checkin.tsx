@@ -63,7 +63,7 @@ export default function CheckInScreen() {
         tone,
         thankful.trim()
       );
-      Alert.alert('Success', 'Your daily check-in has been saved!', [
+      Alert.alert('Great Job!', 'Your daily check-in has been saved! Taking time to reflect is a gift to yourself.', [
         { text: 'OK', onPress: () => router.back() }
       ]);
     } catch (error) {

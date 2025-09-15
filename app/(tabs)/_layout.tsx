@@ -79,6 +79,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="sobriety"
+        options={{
+          title: 'Sobriety',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="star-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="support"
         options={{
           title: 'Support',
@@ -94,12 +103,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings-outline" size={size} color={color} />
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          href: null, // This is all you need
         }}
       />
       </Tabs>

@@ -39,14 +39,6 @@ export default function SettingsScreen() {
   const [userName, setUserName] = useState<string>('');
   const [showUsernameModal, setShowUsernameModal] = useState(false);
   const [newUsername, setNewUsername] = useState('');
-  // Sobriety tracking state
-  const [sobrietyData, setSobrietyData] = useState<any>(null);
-  const [showSobrietyModal, setShowSobrietyModal] = useState(false);
-  const [wantsTracking, setWantsTracking] = useState<boolean | null>(null);
-  const [trackingMode, setTrackingMode] = useState<'sober' | 'trying' | null>(null);
-  const [soberYears, setSoberYears] = useState('');
-  const [soberMonths, setSoberMonths] = useState('');
-  const [soberDays, setSoberDays] = useState('');
   const [backupStatus, setBackupStatus] = useState<{ exists: boolean; timestamp?: string; age?: number; size?: number }>({ exists: false });
 
   useEffect(() => {
@@ -54,7 +46,6 @@ export default function SettingsScreen() {
     loadSupportPerson();
     loadSobrietyCounterSetting();
     loadUserName();
-    loadSobrietyData();
     loadBackupStatus();
   }, []);
 
@@ -134,23 +125,6 @@ export default function SettingsScreen() {
     }
   };
 
-  const loadSobrietyData = async () => {
-    try {
-      const data = await database.getSobrietyData();
-      setSobrietyData(data);
-      
-      // Set the tracking mode state based on existing data
-      if (data && data.tracking_sobriety) {
-        setWantsTracking(true);
-        setTrackingMode(data.tracking_mode || 'sober');
-      } else {
-        setWantsTracking(false);
-        setTrackingMode('sober');
-      }
-    } catch (error) {
-      // console.error('Error loading sobriety data:', error);
-    }
-  };
 
   const handleEditUsername = () => {
     setNewUsername(userName);
@@ -188,103 +162,6 @@ export default function SettingsScreen() {
     setNewUsername('');
   };
 
-  const calculateSoberDate = () => {
-    const years = parseInt(soberYears) || 0;
-    const months = parseInt(soberMonths) || 0;
-    const days = parseInt(soberDays) || 0;
-
-    const now = new Date();
-    const soberDate = new Date(now);
-    
-    soberDate.setFullYear(soberDate.getFullYear() - years);
-    soberDate.setMonth(soberDate.getMonth() - months);
-    soberDate.setDate(soberDate.getDate() - days);
-    
-    return soberDate.toISOString();
-  };
-
-  const handleSetupSobrietyTracking = () => {
-    setWantsTracking(null);
-    setSoberYears('');
-    setSoberMonths('');
-    setSoberDays('');
-    setShowSobrietyModal(true);
-  };
-
-  const handleSaveSobrietyTracking = async () => {
-    if (wantsTracking === null) {
-      Alert.alert('Selection Required', 'Please choose whether you want to track your progress.');
-      return;
-    }
-
-    if (wantsTracking && trackingMode === null) {
-      Alert.alert('Tracking Mode Required', 'Please select whether you want to track days sober or days trying to be sober.');
-      return;
-    }
-
-    if (wantsTracking) {
-      const years = parseInt(soberYears) || 0;
-      const months = parseInt(soberMonths) || 0;
-      const days = parseInt(soberDays) || 0;
-
-      if (years === 0 && months === 0 && days === 0) {
-        Alert.alert('Time Required', 'Please enter at least some time (days, months, or years) for your sobriety tracking.');
-        return;
-      }
-
-      if (years > 50) {
-        Alert.alert('Invalid Years', 'Please enter a reasonable number of years (50 or less).');
-        return;
-      }
-
-      if (months > 11) {
-        Alert.alert('Invalid Months', 'Please enter 0-11 months (12+ months should be counted as years).');
-        return;
-      }
-
-      if (days > 365) {
-        Alert.alert('Invalid Days', 'Please enter 0-365 days (365+ days should be counted as months/years).');
-        return;
-      }
-    }
-
-    try {
-      setIsLoading(true);
-      if (wantsTracking) {
-        const soberDate = calculateSoberDate();
-        await storage.setSobrietyData({
-          trackingSobriety: true,
-          trackingMode: trackingMode!,
-          soberDate: soberDate
-        });
-        await database.saveSobrietyData(true, trackingMode!, soberDate);
-      } else {
-        await storage.setSobrietyData({
-          trackingSobriety: false,
-          trackingMode: 'sober' // Default value when not tracking
-        });
-        await database.saveSobrietyData(false, 'sober');
-      }
-      
-      await loadSobrietyData();
-      await loadDataStats();
-      setShowSobrietyModal(false);
-      Alert.alert('Success', wantsTracking ? 'Sobriety tracking has been enabled!' : 'Sobriety tracking has been disabled.');
-    } catch (error) {
-      // console.error('Error saving sobriety tracking:', error);
-      Alert.alert('Error', 'Failed to save sobriety tracking. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCancelSobrietyTracking = () => {
-    setShowSobrietyModal(false);
-    setWantsTracking(null);
-    setSoberYears('');
-    setSoberMonths('');
-    setSoberDays('');
-  };
 
   const handleResetEncouragements = () => {
     Alert.alert(
@@ -313,36 +190,6 @@ export default function SettingsScreen() {
     );
   };
 
-  const handleResetSobriety = () => {
-    Alert.alert(
-      'Reset Sobriety Tracking',
-      'This will reset your sobriety days to 0. This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setIsLoading(true);
-              await database.saveSobrietyData(false, 'sober');
-              await storage.setSobrietyData({ 
-                trackingSobriety: false,
-                trackingMode: 'sober'
-              });
-              await loadDataStats();
-              Alert.alert('Success', 'Sobriety tracking has been reset.');
-            } catch (error) {
-              // console.error('Error resetting sobriety:', error);
-              Alert.alert('Error', 'Failed to reset sobriety tracking. Please try again.');
-            } finally {
-              setIsLoading(false);
-            }
-          }
-        }
-      ]
-    );
-  };
 
   const handleDeleteAllData = () => {
     Alert.alert(
@@ -561,6 +408,29 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleDebugCheckIn = async () => {
+    await database.debugCheckInStatus();
+    Alert.alert('Debug Check-In', 'Check console for daily check-in debug information');
+  };
+
+  const handleClearTodayCheckIn = async () => {
+    Alert.alert(
+      'Clear Today\'s Check-In',
+      'This will remove today\'s check-in record. Are you sure?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Clear', 
+          style: 'destructive', 
+          onPress: async () => {
+            await database.clearTodayCheckIn();
+            Alert.alert('Cleared', 'Today\'s check-in has been cleared');
+          }
+        }
+      ]
+    );
+  };
+
   const SettingItem = ({ title, subtitle, onPress, destructive = false, disabled = false }: {
     title: string;
     subtitle?: string;
@@ -673,34 +543,6 @@ export default function SettingsScreen() {
           )}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Sobriety Tracking</Text>
-          
-          {sobrietyData?.tracking_sobriety ? (
-            <View style={styles.sobrietyInfoCard}>
-              <View style={styles.sobrietyInfoHeader}>
-                <Text style={styles.sobrietyInfoIcon}>📊</Text>
-                <Text style={styles.sobrietyInfoTitle}>Tracking Enabled</Text>
-              </View>
-              <Text style={styles.sobrietyInfoDays}>
-                {dataStats.sobrietyDays} {sobrietyData.tracking_mode === 'trying' ? 'days trying' : 'days sober'}
-              </Text>
-              <Text style={styles.sobrietyInfoDate}>
-                Since {sobrietyData.sober_date ? new Date(sobrietyData.sober_date).toLocaleDateString() : 'Unknown'}
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.noSobrietyCard}>
-              <Text style={styles.noSobrietyText}>Sobriety tracking is disabled</Text>
-            </View>
-          )}
-          
-          <SettingItem
-            title={sobrietyData?.tracking_sobriety ? "Update Sobriety Tracking" : "Enable Sobriety Tracking"}
-            subtitle={sobrietyData?.tracking_sobriety ? "Change your sobriety start date or disable tracking" : "Track your progress with daily counters"}
-            onPress={handleSetupSobrietyTracking}
-          />
-        </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Display Preferences</Text>
@@ -747,11 +589,6 @@ export default function SettingsScreen() {
             onPress={handleResetEncouragements}
           />
           
-          <SettingItem
-            title="Reset Sobriety Days"
-            subtitle={`Currently ${dataStats.sobrietyDays} ${sobrietyData?.tracking_mode === 'trying' ? 'days trying' : 'days sober'}`}
-            onPress={handleResetSobriety}
-          />
           
           <SettingItem
             title="Reset Onboarding"
@@ -764,6 +601,21 @@ export default function SettingsScreen() {
             title="Delete All Data"
             subtitle="Permanently delete everything"
             onPress={handleDeleteAllData}
+            destructive={true}
+          />
+
+          <Text style={styles.sectionTitle}>Debug Tools</Text>
+          
+          <SettingItem
+            title="Debug Check-In Status"
+            subtitle="Check console for daily check-in information"
+            onPress={handleDebugCheckIn}
+          />
+          
+          <SettingItem
+            title="Clear Today's Check-In"
+            subtitle="Remove today's check-in record"
+            onPress={handleClearTodayCheckIn}
             destructive={true}
           />
         </View>
@@ -881,143 +733,6 @@ export default function SettingsScreen() {
         </View>
       </Modal>
 
-      {/* Sobriety Tracking Modal */}
-      <Modal
-        visible={showSobrietyModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={handleCancelSobrietyTracking}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.sobrietyModalContent}>
-            <Text style={styles.modalTitle}>Sobriety Tracking</Text>
-            
-            <View style={styles.sobrietyOptionsSection}>
-              <TouchableOpacity
-                style={[styles.sobrietyOption, wantsTracking === true && trackingMode === 'sober' && styles.sobrietyOptionSelected]}
-                onPress={() => {
-                  setWantsTracking(true);
-                  setTrackingMode('sober');
-                }}
-              >
-                <Text style={[styles.sobrietyOptionText, wantsTracking === true && trackingMode === 'sober' && styles.sobrietyOptionTextSelected]}>
-                  Yes, I'd like to track my days sober
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.sobrietyOption, wantsTracking === true && trackingMode === 'trying' && styles.sobrietyOptionSelected]}
-                onPress={() => {
-                  setWantsTracking(true);
-                  setTrackingMode('trying');
-                }}
-              >
-                <Text style={[styles.sobrietyOptionText, wantsTracking === true && trackingMode === 'trying' && styles.sobrietyOptionTextSelected]}>
-                  Yes, I'd like to track my days trying to be sober
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.sobrietyOption, wantsTracking === false && styles.sobrietyOptionSelected]}
-                onPress={() => setWantsTracking(false)}
-              >
-                <Text style={[styles.sobrietyOptionText, wantsTracking === false && styles.sobrietyOptionTextSelected]}>
-                  No, I prefer not to track
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {wantsTracking === true && (
-              <View style={styles.trackingDetailsSection}>
-                <Text style={styles.trackingDetailsTitle}>
-                  {trackingMode === 'sober' 
-                    ? 'How long have you been sober?' 
-                    : 'How long have you been trying to be sober?'
-                  }
-                </Text>
-                <Text style={styles.trackingSubtitle}>
-                  {trackingMode === 'sober'
-                    ? 'Enter your current sobriety time'
-                    : 'Enter how long you\'ve been working on your sobriety'
-                  }
-                </Text>
-                
-                <View style={styles.timeInputsContainer}>
-                  <View style={styles.timeInputGroup}>
-                    <Text style={styles.timeInputLabel}>Days</Text>
-                    <TextInput
-                      style={styles.timeInput}
-                      value={soberDays}
-                      onChangeText={setSoberDays}
-                      placeholder="0"
-                      placeholderTextColor={Colors.textLight}
-                      keyboardType="numeric"
-                      returnKeyType="next"
-                      maxLength={3}
-                    />
-                  </View>
-                  
-                  <View style={styles.timeInputGroup}>
-                    <Text style={styles.timeInputLabel}>Months</Text>
-                    <TextInput
-                      style={styles.timeInput}
-                      value={soberMonths}
-                      onChangeText={setSoberMonths}
-                      placeholder="0"
-                      placeholderTextColor={Colors.textLight}
-                      keyboardType="numeric"
-                      returnKeyType="next"
-                      maxLength={2}
-                    />
-                  </View>
-
-                  <View style={styles.timeInputGroup}>
-                    <Text style={styles.timeInputLabel}>Years</Text>
-                    <TextInput
-                      style={styles.timeInput}
-                      value={soberYears}
-                      onChangeText={setSoberYears}
-                      placeholder="0"
-                      placeholderTextColor={Colors.textLight}
-                      keyboardType="numeric"
-                      returnKeyType="done"
-                      maxLength={2}
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.trackingNote}>
-                  <Text style={styles.trackingNoteText}>
-                    {trackingMode === 'sober'
-                      ? '🌟 Every day counts! We\'ll help you celebrate your milestones and progress.'
-                      : '🌟 Every effort counts! We\'ll help you celebrate your commitment and progress.'
-                    }
-                  </Text>
-                </View>
-              </View>
-            )}
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={handleCancelSobrietyTracking}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.saveButton}
-                onPress={handleSaveSobrietyTracking}
-                disabled={isLoading}
-              >
-                <Text style={styles.saveButtonText}>
-                  {isLoading ? 'Saving...' : 'Save'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -1284,157 +999,5 @@ const styles = StyleSheet.create({
   },
   toggleThumbActive: {
     transform: [{ translateX: 20 }],
-  },
-  sobrietyInfoCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  sobrietyInfoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  sobrietyInfoIcon: {
-    fontSize: 24,
-    marginRight: 8,
-  },
-  sobrietyInfoTitle: {
-    ...Fonts.title,
-    color: Colors.text,
-    fontWeight: '600',
-  },
-  sobrietyInfoDays: {
-    ...Fonts.largeTitle,
-    color: Colors.primary,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginVertical: 8,
-  },
-  sobrietyInfoDate: {
-    ...Fonts.body,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-  noSobrietyCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  noSobrietyText: {
-    ...Fonts.body,
-    color: Colors.textSecondary,
-    fontStyle: 'italic',
-  },
-  sobrietyModalContent: {
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
-    padding: 24,
-    margin: 20,
-    width: '90%',
-    maxWidth: 500,
-    maxHeight: '80%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  sobrietyOptionsSection: {
-    marginBottom: 20,
-  },
-  sobrietyOption: {
-    backgroundColor: Colors.background,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: Colors.border,
-  },
-  sobrietyOptionSelected: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '10',
-  },
-  sobrietyOptionText: {
-    ...Fonts.body,
-    color: Colors.text,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  sobrietyOptionTextSelected: {
-    color: Colors.primary,
-    fontWeight: '600',
-  },
-  trackingDetailsSection: {
-    backgroundColor: Colors.background,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-  },
-  trackingDetailsTitle: {
-    ...Fonts.headline,
-    color: Colors.text,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  trackingSubtitle: {
-    ...Fonts.body,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  timeInputsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  timeInputGroup: {
-    flex: 1,
-    marginHorizontal: 4,
-  },
-  timeInputLabel: {
-    ...Fonts.body,
-    color: Colors.text,
-    textAlign: 'center',
-    marginBottom: 8,
-    fontWeight: '600',
-  },
-  timeInput: {
-    ...Fonts.body,
-    color: Colors.text,
-    textAlign: 'center',
-    padding: 16,
-    backgroundColor: Colors.surface,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    fontSize: 18,
-    fontWeight: '600',
-    minHeight: 50,
-    textAlignVertical: 'center',
-  },
-  trackingNote: {
-    backgroundColor: '#FFF8E7',
-    borderRadius: 12,
-    padding: 16,
-  },
-  trackingNoteText: {
-    ...Fonts.caption,
-    color: Colors.text,
-    textAlign: 'center',
-    lineHeight: 20,
   },
 }); 

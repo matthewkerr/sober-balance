@@ -1093,7 +1093,14 @@ class DatabaseService {
     }
 
     try {
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      // Get today's date in YYYY-MM-DD format (calendar day, not 24-hour period)
+      const now = new Date();
+      const today = now.getFullYear() + '-' + 
+                   String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(now.getDate()).padStart(2, '0');
+      
+      console.log('Creating daily check-in for date:', today);
+      
       const result = await this.db!.runAsync(
         'INSERT INTO daily_check_ins (goal, energy, tone, thankful, date) VALUES (?, ?, ?, ?, ?)',
         [goal, energy, tone, thankful, today]
@@ -1125,14 +1132,29 @@ class DatabaseService {
     }
 
     try {
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      // Get today's date in YYYY-MM-DD format (calendar day, not 24-hour period)
+      const now = new Date();
+      const today = now.getFullYear() + '-' + 
+                   String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(now.getDate()).padStart(2, '0');
+      
+      // Debug logging to help troubleshoot
+      console.log('Checking for today\'s check-in:', {
+        today: today,
+        currentTime: now.toISOString(),
+        localTime: now.toLocaleString()
+      });
+      
       const result = await this.db!.getFirstAsync<DailyCheckIn>(
         'SELECT * FROM daily_check_ins WHERE date = ?',
         [today]
       );
+      
+      console.log('Today check-in result:', result ? 'Found check-in' : 'No check-in found');
+      
       return result || null;
     } catch (error) {
-      // console.error('Error getting today check-in:', error);
+      console.error('Error getting today check-in:', error);
       return null;
     }
   }
@@ -1152,10 +1174,96 @@ class DatabaseService {
       const results = await this.db!.getAllAsync<DailyCheckIn>(
         'SELECT * FROM daily_check_ins ORDER BY date DESC LIMIT 30'
       );
+      
+      // Debug logging to help troubleshoot
+      console.log('Check-in history:', results.map(r => ({ date: r.date, created_at: r.created_at })));
+      
       return results;
     } catch (error) {
       // console.error('Error getting check-in history:', error);
       return [];
+    }
+  }
+
+  // Debug method to check daily check-in status
+  async debugCheckInStatus(): Promise<void> {
+    if (!this.db) {
+      console.log('Database not initialized');
+      return;
+    }
+
+    try {
+      const now = new Date();
+      const today = now.getFullYear() + '-' + 
+                   String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(now.getDate()).padStart(2, '0');
+      
+      console.log('=== DAILY CHECK-IN DEBUG ===');
+      console.log('Current time:', now.toLocaleString());
+      console.log('Today\'s date (YYYY-MM-DD):', today);
+      
+      // Get all check-ins from the last 3 days
+      const recentCheckIns = await this.db.getAllAsync<DailyCheckIn>(
+        'SELECT * FROM daily_check_ins WHERE date >= ? ORDER BY date DESC',
+        [now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate() - 2).padStart(2, '0')]
+      );
+      
+      console.log('Recent check-ins:');
+      recentCheckIns.forEach(checkIn => {
+        console.log(`- Date: ${checkIn.date}, Created: ${checkIn.created_at}, Goal: ${checkIn.goal.substring(0, 30)}...`);
+      });
+      
+      // Check if today's check-in exists
+      const todayCheckIn = await this.db.getFirstAsync<DailyCheckIn>(
+        'SELECT * FROM daily_check_ins WHERE date = ?',
+        [today]
+      );
+      
+      console.log('Today\'s check-in exists:', !!todayCheckIn);
+      if (todayCheckIn) {
+        console.log('Today\'s check-in details:', {
+          date: todayCheckIn.date,
+          created_at: todayCheckIn.created_at,
+          goal: todayCheckIn.goal.substring(0, 50) + '...'
+        });
+      }
+      
+      console.log('=== END DEBUG ===');
+    } catch (error) {
+      console.error('Error in debug check-in status:', error);
+    }
+  }
+
+  // Clear today's check-in (for debugging)
+  async clearTodayCheckIn(): Promise<void> {
+    if (!this.db) {
+      console.log('Database not initialized');
+      return;
+    }
+
+    try {
+      const now = new Date();
+      const today = now.getFullYear() + '-' + 
+                   String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(now.getDate()).padStart(2, '0');
+      
+      console.log('Clearing today\'s check-in for date:', today);
+      
+      const result = await this.db.runAsync(
+        'DELETE FROM daily_check_ins WHERE date = ?',
+        [today]
+      );
+      
+      console.log('Cleared check-ins:', result.changes);
+      
+      // Backup data after clearing
+      try {
+        await this.backupData();
+      } catch (error) {
+        console.warn('Failed to backup data after clearing today\'s check-in:', error);
+      }
+    } catch (error) {
+      console.error('Error clearing today\'s check-in:', error);
     }
   }
 

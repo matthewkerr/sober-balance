@@ -83,10 +83,18 @@ export default function IntentionScreen() {
   const handleCancelSetting = () => {
     if (newIntention.trim()) {
       Alert.alert(
-        'Discard Intention?',
-        'Are you sure you want to discard this intention?',
+        'Save for Later?',
+        'Your intention is valuable. Would you like to save it for later or discard it?',
         [
           { text: 'Keep Writing', style: 'cancel' },
+          { 
+            text: 'Save for Later', 
+            style: 'default',
+            onPress: () => {
+              setNewIntention('');
+              setIsSetting(false);
+            }
+          },
           { 
             text: 'Discard', 
             style: 'destructive',
@@ -154,22 +162,22 @@ export default function IntentionScreen() {
 
   const handleDeleteIntention = (intention: Intention) => {
     Alert.alert(
-      'Delete Intention?',
-      'Are you sure you want to delete this intention? This action cannot be undone.',
+      'Remove Intention?',
+      'This intention was part of your journey. Are you sure you want to remove it?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Keep It', style: 'cancel' },
         {
-          text: 'Delete',
+          text: 'Remove',
           style: 'destructive',
           onPress: async () => {
             try {
               setIsLoading(true);
               await database.deleteIntention(intention.id!);
               await loadIntentions();
-              Alert.alert('Success', 'Intention deleted.');
+              Alert.alert('Removed', 'Intention removed. Your journey continues.');
             } catch (error) {
               // console.error('Error deleting intention:', error);
-              Alert.alert('Error', 'Failed to delete intention. Please try again.');
+              Alert.alert('Error', 'Failed to remove intention. Please try again.');
             } finally {
               setIsLoading(false);
             }

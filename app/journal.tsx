@@ -83,10 +83,18 @@ export default function JournalScreen() {
   const handleCancelWriting = () => {
     if (newEntry.trim()) {
       Alert.alert(
-        'Discard Entry?',
-        'Are you sure you want to discard this entry?',
+        'Save for Later?',
+        'Your thoughts are valuable. Would you like to save them for later or discard them?',
         [
           { text: 'Keep Writing', style: 'cancel' },
+          { 
+            text: 'Save for Later', 
+            style: 'default',
+            onPress: () => {
+              setNewEntry('');
+              setIsWriting(false);
+            }
+          },
           { 
             text: 'Discard', 
             style: 'destructive',
@@ -154,22 +162,22 @@ export default function JournalScreen() {
 
   const handleDeleteEntry = (entry: JournalEntry) => {
     Alert.alert(
-      'Delete Journal Entry?',
-      'Are you sure you want to delete this journal entry? This action cannot be undone.',
+      'Remove Journal Entry?',
+      'This entry was part of your journey. Are you sure you want to remove it?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Keep It', style: 'cancel' },
         {
-          text: 'Delete',
+          text: 'Remove',
           style: 'destructive',
           onPress: async () => {
             try {
               setIsLoading(true);
               await database.deleteJournalEntry(entry.id!);
               await loadJournalEntries();
-              Alert.alert('Success', 'Journal entry deleted.');
+              Alert.alert('Removed', 'Journal entry removed. Your reflections continue.');
             } catch (error) {
               // console.error('Error deleting journal entry:', error);
-              Alert.alert('Error', 'Failed to delete journal entry. Please try again.');
+              Alert.alert('Error', 'Failed to remove journal entry. Please try again.');
             } finally {
               setIsLoading(false);
             }

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   SafeAreaView,
+  RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,9 +32,12 @@ export default function HomeScreen() {
   const [todayCheckIn, setTodayCheckIn] = useState<any | null>(null);
   const [showSobrietyCounter, setShowSobrietyCounter] = useState(true);
   const [hasLoadedEncouragement, setHasLoadedEncouragement] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     React.useCallback(() => {
+      // console.log('Home screen focused - refreshing data');
       loadUserName();
       // Only load encouragement on first focus (when app opens)
       if (!hasLoadedEncouragement) {
@@ -41,9 +45,9 @@ export default function HomeScreen() {
       }
       loadSobrietyData();
       loadCurrentIntention();
-      loadTodayCheckIn();
+      loadTodayCheckIn(); // This will refresh every time the screen comes into focus
       loadSobrietyCounterSetting();
-    }, [hasLoadedEncouragement])
+    }, [hasLoadedEncouragement, refreshKey])
   );
 
   const loadUserName = async () => {
@@ -124,7 +128,10 @@ export default function HomeScreen() {
     try {
       const checkIn = await database.getTodayCheckIn();
       setTodayCheckIn(checkIn);
-      // console.log('Loaded today check-in:', checkIn);
+      // console.log('Home screen - Loaded today check-in:', checkIn ? 'Found check-in' : 'No check-in found');
+      // if (checkIn) {
+      //   console.log('Check-in details:', { date: checkIn.date, goal: checkIn.goal.substring(0, 30) + '...' });
+      // }
     } catch (error) {
       // console.error('Error loading today check-in:', error);
     }
@@ -137,6 +144,21 @@ export default function HomeScreen() {
     } catch (error) {
       // console.error('Error loading sobriety counter setting:', error);
     }
+  };
+
+  const refreshCheckInStatus = async () => {
+    // console.log('Manually refreshing check-in status');
+    await loadTodayCheckIn();
+    setRefreshKey(prev => prev + 1);
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    // console.log('Pull to refresh triggered');
+    await loadTodayCheckIn();
+    await loadCurrentIntention();
+    await loadSobrietyData();
+    setRefreshing(false);
   };
 
   const getGreeting = () => {
@@ -177,6 +199,14 @@ export default function HomeScreen() {
         bounces={true}
         alwaysBounceVertical={false}
         scrollEventThrottle={16}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.primary}
+            colors={[Colors.primary]}
+          />
+        }
         contentContainerStyle={[
           styles.scrollContent,
           { 
@@ -205,10 +235,14 @@ export default function HomeScreen() {
       )}
       
       {todayCheckIn && (
-        <View style={styles.checkInCompleteCard}>
+        <TouchableOpacity 
+          style={styles.checkInCompleteCard}
+          onPress={refreshCheckInStatus}
+          activeOpacity={0.8}
+        >
           <Text style={styles.checkInCompleteText}>✓ Daily Check-In Complete</Text>
-          <Text style={styles.checkInCompleteSubtext}>Great job checking in today!</Text>
-        </View>
+          <Text style={styles.checkInCompleteSubtext}>Great job checking in today! Tap to refresh</Text>
+        </TouchableOpacity>
       )}
       
       {isTrackingSobriety && sobrietyDays !== null && showSobrietyCounter && (
@@ -224,8 +258,8 @@ export default function HomeScreen() {
           </Text>
           <Text style={styles.sobrietySubtext}>
             {sobrietyData?.tracking_mode === 'trying' 
-              ? 'Every effort is a step forward worth celebrating'
-              : 'Every day is a victory worth celebrating'
+              ? 'Every effort counts - you\'re doing amazing'
+              : 'Every day is a victory - you\'re incredible'
             }
           </Text>
         </View>
