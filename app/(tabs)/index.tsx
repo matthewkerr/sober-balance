@@ -241,12 +241,16 @@ export default function HomeScreen() {
           activeOpacity={0.8}
         >
           <Text style={styles.checkInCompleteText}>✓ Daily Check-In Complete</Text>
-          <Text style={styles.checkInCompleteSubtext}>Great job checking in today! Tap to refresh</Text>
+          <Text style={styles.checkInCompleteSubtext}>Great job checking in today!</Text>
         </TouchableOpacity>
       )}
       
       {isTrackingSobriety && sobrietyDays !== null && showSobrietyCounter && (
-        <View style={styles.sobrietyCard}>
+        <TouchableOpacity 
+          style={styles.sobrietyCard}
+          onPress={() => router.push('/(tabs)/sobriety')}
+          activeOpacity={0.8}
+        >
           <View style={styles.sobrietyHeader}>
             <Text style={styles.sobrietyIcon}>🌟</Text>
             <Text style={styles.sobrietyDays}>
@@ -262,7 +266,7 @@ export default function HomeScreen() {
               : 'Every day is a victory - you\'re incredible'
             }
           </Text>
-        </View>
+        </TouchableOpacity>
       )}
       
       {encouragement && (

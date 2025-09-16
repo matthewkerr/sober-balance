@@ -266,6 +266,302 @@ export default function SupportScreen() {
                 It's okay to ask for help. Your support person is here because they care about you.
               </Text>
             </View>
+
+            {/* Crisis Resources Section */}
+            <View style={styles.crisisSection}>
+              <Text style={styles.crisisTitle}>🆘 Crisis Support</Text>
+              <Text style={styles.crisisSubtitle}>
+                If you need immediate help, these resources are available 24/7
+              </Text>
+              
+              <View style={styles.crisisResources}>
+                <TouchableOpacity
+                  style={styles.crisisResource}
+                  onPress={() => Linking.openURL('tel:1-800-662-4357')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.crisisResourceName}>SAMHSA National Helpline</Text>
+                  <Text style={styles.crisisResourceNumber}>1-800-662-4357</Text>
+                  <Text style={styles.crisisResourceDescription}>
+                    Free, confidential treatment referral and information service for individuals and families facing mental health and substance use disorders. Available 24/7 in English and Spanish.
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.crisisResource}
+                  onPress={() => Linking.openURL('tel:988')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.crisisResourceName}>Crisis Lifeline</Text>
+                  <Text style={styles.crisisResourceNumber}>988</Text>
+                  <Text style={styles.crisisResourceDescription}>
+                    National suicide prevention and crisis intervention service. Provides immediate support for anyone in emotional distress or suicidal crisis. Available 24/7.
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.crisisResource}
+                  onPress={() => Linking.openURL('tel:988')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.crisisResourceName}>Veterans Crisis Line</Text>
+                  <Text style={styles.crisisResourceNumber}>988, then press 1</Text>
+                  <Text style={styles.crisisResourceDescription}>
+                    Confidential crisis support for veterans and their families. No VA enrollment required. Conversations are private and benefits are not affected by seeking help.
+                  </Text>
+                </TouchableOpacity>
+
+                <View style={styles.crisisResource}>
+                  <Text style={styles.crisisResourceName}>Crisis Text Line</Text>
+                  <Text style={styles.crisisResourceNumber}>Text: HOME to 741741</Text>
+                  <Text style={styles.crisisResourceDescription}>
+                    Free, 24/7 crisis support via text message. Connect with trained crisis counselors who provide emotional support and crisis intervention through confidential text conversations.
+                  </Text>
+                </View>
+              </View>
+
+              {/* Additional Support Groups */}
+              <View style={styles.supportGroupsSection}>
+                <Text style={styles.supportGroupsTitle}>🤝 Support Groups</Text>
+                <Text style={styles.disclaimerText}>
+                  Sober Balance has no affiliation with these organizations. We simply want to provide you with additional resources that many people find helpful in their recovery journey.
+                </Text>
+                
+                <View style={styles.supportGroupResources}>
+                  <TouchableOpacity
+                    style={styles.supportGroupResource}
+                    onPress={() => Linking.openURL('https://aa.org')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.supportGroupName}>Alcoholics Anonymous (AA)</Text>
+                    <Text style={styles.supportGroupNumber}>aa.org</Text>
+                    <Text style={styles.supportGroupDescription}>
+                      A fellowship of people who share their experience, strength, and hope with each other to solve their common problem and help others recover from alcoholism.
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.supportGroupResource}
+                    onPress={() => Linking.openURL('https://na.org')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.supportGroupName}>Narcotics Anonymous (NA)</Text>
+                    <Text style={styles.supportGroupNumber}>na.org</Text>
+                    <Text style={styles.supportGroupDescription}>
+                      A community-based organization of men and women for whom drugs had become a major problem. Members help each other stay clean through a program of complete abstinence.
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.supportGroupResource}
+                    onPress={() => Linking.openURL('https://smartrecovery.org')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.supportGroupName}>SMART Recovery</Text>
+                    <Text style={styles.supportGroupNumber}>smartrecovery.org</Text>
+                    <Text style={styles.supportGroupDescription}>
+                      Self-Management and Recovery Training - a science-based program that helps people recover from addiction using cognitive behavioral therapy techniques and peer support.
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.supportGroupResource}
+                    onPress={() => Linking.openURL('https://lifering.org')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.supportGroupName}>LifeRing Secular Recovery</Text>
+                    <Text style={styles.supportGroupNumber}>lifering.org</Text>
+                    <Text style={styles.supportGroupDescription}>
+                      A secular recovery program that emphasizes personal responsibility and peer support without religious or spiritual requirements. Focuses on building a sober lifestyle.
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Meeting Locators */}
+              <View style={styles.meetingLocatorsSection}>
+                <Text style={styles.meetingLocatorsTitle}>📍 Meeting Locators</Text>
+                <Text style={styles.meetingLocatorsSubtitle}>
+                  Find local meetings and support groups in your area
+                </Text>
+                
+                <View style={styles.meetingLocatorsList}>
+                  <TouchableOpacity
+                    style={styles.meetingLocatorResource}
+                    onPress={() => Linking.openURL('https://aa.org/meeting-finder')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.meetingLocatorName}>AA Meeting Finder</Text>
+                    <Text style={styles.meetingLocatorWebsite}>aa.org/meeting-finder</Text>
+                    <Text style={styles.meetingLocatorDescription}>
+                      Find local Alcoholics Anonymous meetings in your area. Search by location, time, and meeting type including in-person, online, and hybrid options.
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.meetingLocatorResource}
+                    onPress={() => Linking.openURL('https://na.org/meeting-search')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.meetingLocatorName}>NA Meeting Locator</Text>
+                    <Text style={styles.meetingLocatorWebsite}>na.org/meeting-search</Text>
+                    <Text style={styles.meetingLocatorDescription}>
+                      Search for Narcotics Anonymous meetings near you. Includes meeting details, accessibility information, and special focus groups.
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.meetingLocatorResource}
+                    onPress={() => Linking.openURL('https://smartrecovery.org/meetings')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.meetingLocatorName}>SMART Recovery Meetings</Text>
+                    <Text style={styles.meetingLocatorWebsite}>smartrecovery.org/meetings</Text>
+                    <Text style={styles.meetingLocatorDescription}>
+                      Find SMART Recovery meetings and online sessions. Includes both in-person and virtual options with science-based recovery tools.
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Family & Friends Support */}
+              <View style={styles.familySupportSection}>
+                <Text style={styles.familySupportTitle}>👨‍👩‍👧‍👦 Family & Friends Support</Text>
+                <Text style={styles.familySupportSubtitle}>
+                  Resources for families and friends supporting someone in recovery
+                </Text>
+                
+                <View style={styles.familySupportList}>
+                  <TouchableOpacity
+                    style={styles.familySupportResource}
+                    onPress={() => Linking.openURL('https://al-anon.org')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.familySupportName}>Al-Anon Family Groups</Text>
+                    <Text style={styles.familySupportWebsite}>al-anon.org</Text>
+                    <Text style={styles.familySupportDescription}>
+                      Support for families and friends of alcoholics. Learn about addiction, set healthy boundaries, and find community with others who understand your experience.
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.familySupportResource}
+                    onPress={() => Linking.openURL('https://nar-anon.org')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.familySupportName}>Nar-Anon Family Groups</Text>
+                    <Text style={styles.familySupportWebsite}>nar-anon.org</Text>
+                    <Text style={styles.familySupportDescription}>
+                      Support for families and friends of drug users. Find understanding, hope, and practical tools for coping with a loved one's addiction.
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.familySupportResource}
+                    onPress={() => Linking.openURL('https://smartrecovery.org/family-friends')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.familySupportName}>SMART Recovery Family & Friends</Text>
+                    <Text style={styles.familySupportWebsite}>smartrecovery.org/family-friends</Text>
+                    <Text style={styles.familySupportDescription}>
+                      Science-based support for families. Learn evidence-based strategies for supporting recovery while maintaining your own wellbeing.
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Online/Virtual Meeting Options */}
+              <View style={styles.onlineMeetingsSection}>
+                <Text style={styles.onlineMeetingsTitle}>💻 Online/Virtual Meetings</Text>
+                <Text style={styles.onlineMeetingsSubtitle}>
+                  Access support from anywhere with virtual meeting options
+                </Text>
+                
+                <View style={styles.onlineMeetingsList}>
+                  <TouchableOpacity
+                    style={styles.onlineMeetingResource}
+                    onPress={() => Linking.openURL('https://aa-intergroup.org')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.onlineMeetingName}>AA Online Intergroup</Text>
+                    <Text style={styles.onlineMeetingWebsite}>aa-intergroup.org</Text>
+                    <Text style={styles.onlineMeetingDescription}>
+                      Online AA meetings and resources available 24/7. Join virtual meetings from anywhere with internet access, including phone and video options.
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.onlineMeetingResource}
+                    onPress={() => Linking.openURL('https://na.org/online-meetings')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.onlineMeetingName}>NA Online Meetings</Text>
+                    <Text style={styles.onlineMeetingWebsite}>na.org/online-meetings</Text>
+                    <Text style={styles.onlineMeetingDescription}>
+                      Virtual NA meetings and support groups. Access meetings via phone, video, or chat platforms with options for different time zones and languages.
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.onlineMeetingResource}
+                    onPress={() => Linking.openURL('https://smartrecovery.org/online')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.onlineMeetingName}>SMART Recovery Online</Text>
+                    <Text style={styles.onlineMeetingWebsite}>smartrecovery.org/online</Text>
+                    <Text style={styles.onlineMeetingDescription}>
+                      Online SMART Recovery meetings and tools. Access science-based recovery resources, virtual meetings, and interactive tools from your device.
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Additional Resources */}
+              <View style={styles.additionalResourcesSection}>
+                <Text style={styles.additionalResourcesTitle}>📚 Additional Resources</Text>
+                <Text style={styles.additionalResourcesSubtitle}>
+                  More resources for mental health and crisis support
+                </Text>
+                
+                <View style={styles.additionalResourcesList}>
+                  <TouchableOpacity
+                    style={styles.additionalResource}
+                    onPress={() => Linking.openURL('https://mhanational.org')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.additionalResourceName}>Mental Health America</Text>
+                    <Text style={styles.additionalResourceNumber}>mhanational.org</Text>
+                    <Text style={styles.additionalResourceDescription}>
+                      National community-based nonprofit dedicated to addressing mental health needs and promoting mental wellness for all Americans.
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.additionalResource}
+                    onPress={() => Linking.openURL('https://nami.org')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.additionalResourceName}>National Alliance on Mental Illness (NAMI)</Text>
+                    <Text style={styles.additionalResourceNumber}>nami.org</Text>
+                    <Text style={styles.additionalResourceDescription}>
+                      The nation's largest grassroots mental health organization dedicated to building better lives for Americans affected by mental illness.
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.additionalResource}
+                    onPress={() => Linking.openURL('https://mentalhealth.va.gov')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.additionalResourceName}>VA Mental Health Services</Text>
+                    <Text style={styles.additionalResourceNumber}>mentalhealth.va.gov</Text>
+                    <Text style={styles.additionalResourceDescription}>
+                      Free, confidential mental health and substance use support for veterans. Judgment-free care with privacy protections and no impact on benefits.
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
             
             {/* Bottom spacer to ensure content isn't hidden behind navigation */}
             <View style={{ height: 20 }} />
@@ -373,6 +669,8 @@ const styles = StyleSheet.create({
     padding: 18, // Reduced from 20
     alignItems: 'center',
     marginBottom: 16, // Added bottom margin for better spacing
+    borderWidth: 2,
+    borderColor: Colors.primary,
   },
   reminderTitle: {
     ...Fonts.headline,
@@ -385,6 +683,278 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  crisisSection: {
+    marginTop: 20,
+    marginBottom: 16,
+  },
+  crisisTitle: {
+    ...Fonts.headline,
+    color: Colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  crisisSubtitle: {
+    ...Fonts.caption,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  crisisResources: {
+    gap: 12,
+  },
+  crisisResource: {
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  crisisResourceName: {
+    ...Fonts.body,
+    color: Colors.text,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  crisisResourceNumber: {
+    ...Fonts.body,
+    color: Colors.primary,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  crisisResourceDescription: {
+    ...Fonts.caption,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+  },
+  supportGroupsSection: {
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  supportGroupsTitle: {
+    ...Fonts.headline,
+    color: Colors.text,
+    textAlign: 'center',
+    marginBottom: 12,
+    fontWeight: '600',
+  },
+  disclaimerText: {
+    ...Fonts.caption,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 20,
+    fontStyle: 'italic',
+    lineHeight: 20,
+  },
+  supportGroupResources: {
+    gap: 12,
+  },
+  supportGroupResource: {
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  supportGroupName: {
+    ...Fonts.body,
+    color: Colors.text,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  supportGroupNumber: {
+    ...Fonts.body,
+    color: Colors.primary,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  supportGroupDescription: {
+    ...Fonts.caption,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+  },
+  additionalResourcesSection: {
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  additionalResourcesTitle: {
+    ...Fonts.headline,
+    color: Colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  additionalResourcesSubtitle: {
+    ...Fonts.caption,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  additionalResourcesList: {
+    gap: 12,
+  },
+  additionalResource: {
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  additionalResourceName: {
+    ...Fonts.body,
+    color: Colors.text,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  additionalResourceNumber: {
+    ...Fonts.body,
+    color: Colors.primary,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  additionalResourceDescription: {
+    ...Fonts.caption,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+  },
+  meetingLocatorsSection: {
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  meetingLocatorsTitle: {
+    ...Fonts.headline,
+    color: Colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  meetingLocatorsSubtitle: {
+    ...Fonts.caption,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  meetingLocatorsList: {
+    gap: 12,
+  },
+  meetingLocatorResource: {
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  meetingLocatorName: {
+    ...Fonts.body,
+    color: Colors.text,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  meetingLocatorWebsite: {
+    ...Fonts.body,
+    color: Colors.primary,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  meetingLocatorDescription: {
+    ...Fonts.caption,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+  },
+  familySupportSection: {
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  familySupportTitle: {
+    ...Fonts.headline,
+    color: Colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  familySupportSubtitle: {
+    ...Fonts.caption,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  familySupportList: {
+    gap: 12,
+  },
+  familySupportResource: {
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  familySupportName: {
+    ...Fonts.body,
+    color: Colors.text,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  familySupportWebsite: {
+    ...Fonts.body,
+    color: Colors.primary,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  familySupportDescription: {
+    ...Fonts.caption,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+  },
+  onlineMeetingsSection: {
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  onlineMeetingsTitle: {
+    ...Fonts.headline,
+    color: Colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  onlineMeetingsSubtitle: {
+    ...Fonts.caption,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  onlineMeetingsList: {
+    gap: 12,
+  },
+  onlineMeetingResource: {
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  onlineMeetingName: {
+    ...Fonts.body,
+    color: Colors.text,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  onlineMeetingWebsite: {
+    ...Fonts.body,
+    color: Colors.primary,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  onlineMeetingDescription: {
+    ...Fonts.caption,
+    color: Colors.textSecondary,
+    lineHeight: 18,
   },
   noSupportCard: {
     backgroundColor: Colors.surface,
