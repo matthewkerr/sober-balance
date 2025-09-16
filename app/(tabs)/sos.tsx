@@ -358,13 +358,13 @@ const styles = StyleSheet.create({
     flex: 1, 
     alignItems: 'center', 
     padding: 16, // Reduced from 20
-    paddingTop: 25, // Reduced from 40
+    paddingTop: 60, // Increased from 25 to bring content down
     // paddingBottom will be set dynamically based on safe area
   },
   breathingSection: { 
     alignItems: 'center', 
-    marginBottom: 25, // Reduced from 40
-    marginTop: 15, // Reduced from 20
+    marginBottom: 30, // Increased from 25 for better spacing
+    marginTop: 20, // Increased from 15 for better spacing
   },
   breathingCircle: {
     width: 150, 
@@ -382,8 +382,8 @@ const styles = StyleSheet.create({
     ...Fonts.title,
     color: Colors.surface,
     textAlign: 'center',
-    marginBottom: 6, // Reduced from 8
-    marginTop: 25, // Reduced from 40
+    marginBottom: 8, // Increased from 6 for better spacing
+    marginTop: 20, // Reduced from 25 for better balance
   },
   breathCount: {
     ...Fonts.body,
