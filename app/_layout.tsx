@@ -44,18 +44,18 @@ export default function RootLayout() {
         const initPromise = database.init();
         
         await Promise.race([initPromise, timeoutPromise]);
-        console.log('Database initialized successfully');
+        // console.log('Database initialized successfully');
       } catch (error) {
-        console.error('Failed to initialize database:', error);
+        // console.error('Failed to initialize database:', error);
         
         // Try to initialize again after a delay for slow devices
         try {
-          console.log('Retrying database initialization...');
+          // console.log('Retrying database initialization...');
           await new Promise(resolve => setTimeout(resolve, 2000));
           await database.init();
-          console.log('Database initialized successfully on retry');
+          // console.log('Database initialized successfully on retry');
         } catch (retryError) {
-          console.error('Database initialization failed on retry:', retryError);
+          // console.error('Database initialization failed on retry:', retryError);
           // Continue even if database fails to initialize
         }
       }

@@ -1099,7 +1099,7 @@ class DatabaseService {
                    String(now.getMonth() + 1).padStart(2, '0') + '-' + 
                    String(now.getDate()).padStart(2, '0');
       
-      console.log('Creating daily check-in for date:', today);
+      // console.log('Creating daily check-in for date:', today);
       
       const result = await this.db!.runAsync(
         'INSERT INTO daily_check_ins (goal, energy, tone, thankful, date) VALUES (?, ?, ?, ?, ?)',
@@ -1139,18 +1139,18 @@ class DatabaseService {
                    String(now.getDate()).padStart(2, '0');
       
       // Debug logging to help troubleshoot
-      console.log('Checking for today\'s check-in:', {
-        today: today,
-        currentTime: now.toISOString(),
-        localTime: now.toLocaleString()
-      });
+      // console.log('Checking for today\'s check-in:', {
+      //   today: today,
+      //   currentTime: now.toISOString(),
+      //   localTime: now.toLocaleString()
+      // });
       
       const result = await this.db!.getFirstAsync<DailyCheckIn>(
         'SELECT * FROM daily_check_ins WHERE date = ?',
         [today]
       );
       
-      console.log('Today check-in result:', result ? 'Found check-in' : 'No check-in found');
+      // console.log('Today check-in result:', result ? 'Found check-in' : 'No check-in found');
       
       return result || null;
     } catch (error) {
@@ -1176,7 +1176,7 @@ class DatabaseService {
       );
       
       // Debug logging to help troubleshoot
-      console.log('Check-in history:', results.map(r => ({ date: r.date, created_at: r.created_at })));
+      // console.log('Check-in history:', results.map(r => ({ date: r.date, created_at: r.created_at })));
       
       return results;
     } catch (error) {
@@ -1188,7 +1188,7 @@ class DatabaseService {
   // Debug method to check daily check-in status
   async debugCheckInStatus(): Promise<void> {
     if (!this.db) {
-      console.log('Database not initialized');
+      // console.log('Database not initialized');
       return;
     }
 
@@ -1198,9 +1198,9 @@ class DatabaseService {
                    String(now.getMonth() + 1).padStart(2, '0') + '-' + 
                    String(now.getDate()).padStart(2, '0');
       
-      console.log('=== DAILY CHECK-IN DEBUG ===');
-      console.log('Current time:', now.toLocaleString());
-      console.log('Today\'s date (YYYY-MM-DD):', today);
+      // console.log('=== DAILY CHECK-IN DEBUG ===');
+      // console.log('Current time:', now.toLocaleString());
+      // console.log('Today\'s date (YYYY-MM-DD):', today);
       
       // Get all check-ins from the last 3 days
       const recentCheckIns = await this.db.getAllAsync<DailyCheckIn>(
@@ -1208,9 +1208,9 @@ class DatabaseService {
         [now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate() - 2).padStart(2, '0')]
       );
       
-      console.log('Recent check-ins:');
+      //console.log('Recent check-ins:');
       recentCheckIns.forEach(checkIn => {
-        console.log(`- Date: ${checkIn.date}, Created: ${checkIn.created_at}, Goal: ${checkIn.goal.substring(0, 30)}...`);
+        //console.log(`- Date: ${checkIn.date}, Created: ${checkIn.created_at}, Goal: ${checkIn.goal.substring(0, 30)}...`);
       });
       
       // Check if today's check-in exists
@@ -1219,25 +1219,25 @@ class DatabaseService {
         [today]
       );
       
-      console.log('Today\'s check-in exists:', !!todayCheckIn);
+      // console.log('Today\'s check-in exists:', !!todayCheckIn);
       if (todayCheckIn) {
-        console.log('Today\'s check-in details:', {
-          date: todayCheckIn.date,
-          created_at: todayCheckIn.created_at,
-          goal: todayCheckIn.goal.substring(0, 50) + '...'
-        });
+        // console.log('Today\'s check-in details:', {
+        //   date: todayCheckIn.date,
+        //   created_at: todayCheckIn.created_at,
+        //   goal: todayCheckIn.goal.substring(0, 50) + '...'
+        // });
       }
       
-      console.log('=== END DEBUG ===');
+      // console.log('=== END DEBUG ===');
     } catch (error) {
-      console.error('Error in debug check-in status:', error);
+      // console.error('Error in debug check-in status:', error);
     }
   }
 
   // Clear today's check-in (for debugging)
   async clearTodayCheckIn(): Promise<void> {
     if (!this.db) {
-      console.log('Database not initialized');
+      // console.log('Database not initialized');
       return;
     }
 
@@ -1247,14 +1247,14 @@ class DatabaseService {
                    String(now.getMonth() + 1).padStart(2, '0') + '-' + 
                    String(now.getDate()).padStart(2, '0');
       
-      console.log('Clearing today\'s check-in for date:', today);
+      //console.log('Clearing today\'s check-in for date:', today);
       
       const result = await this.db.runAsync(
         'DELETE FROM daily_check_ins WHERE date = ?',
         [today]
       );
       
-      console.log('Cleared check-ins:', result.changes);
+      // console.log('Cleared check-ins:', result.changes);
       
       // Backup data after clearing
       try {
@@ -1454,9 +1454,9 @@ class DatabaseService {
         await AsyncStorage.setItem('sober_balance_backup', backupString);
       }, 3, 500);
       
-      console.log(`Data backed up successfully (${Math.round(backupSize / 1024)}KB, ${new Date().toISOString()})`);
+      // console.log(`Data backed up successfully (${Math.round(backupSize / 1024)}KB, ${new Date().toISOString()})`);
     } catch (error) {
-      console.error('Error backing up data:', error);
+      // console.error('Error backing up data:', error);
       throw error; // Re-throw to allow calling code to handle the error
     }
   }
@@ -1506,7 +1506,7 @@ class DatabaseService {
         return await AsyncStorage.getItem('sober_balance_backup');
       }, 3, 500);
       if (!backupData) {
-        console.log('No backup data found - starting with fresh data');
+        // console.log('No backup data found - starting with fresh data');
         return;
       }
 
@@ -1524,10 +1524,10 @@ class DatabaseService {
 
       // Validate backup version compatibility
       if (backup.version && backup.version !== '1.0.0') {
-        console.warn(`Backup version ${backup.version} may not be compatible with current version 1.0.0`);
+        // console.warn(`Backup version ${backup.version} may not be compatible with current version 1.0.0`);
       }
 
-      console.log(`Restoring data from backup (${backup.timestamp || 'unknown date'})...`);
+      // console.log(`Restoring data from backup (${backup.timestamp || 'unknown date'})...`);
 
       // Restore data in the correct order (respecting foreign key constraints)
       if (backup.user) {
